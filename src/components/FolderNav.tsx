@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Folder, SortOption } from "@/types";
-import { Layers, Plus, Edit2, Pin, ArrowUpDown, Clock, Flame, Check, Sparkles, LayoutGrid, CheckSquare } from "lucide-react";
+import { Layers, Plus, FolderPlus, Edit2, Pin, ArrowUpDown, Clock, Flame, Check, Sparkles, LayoutGrid, CheckSquare } from "lucide-react";
 import { motion } from "motion/react";
 import {
   DropdownMenu,
@@ -201,68 +201,80 @@ export function FolderNav({
           <button
             type="button"
             onClick={onOpenAddBookmark}
-            className="flex items-center gap-1.5 rounded-full border border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 px-4 py-1.5 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-white hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-400/40 backdrop-blur-md transition-all shadow-sm active:scale-95 text-shadow-contrast"
+            className="flex items-center gap-1.5 rounded-full border border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 px-4 py-1.5 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-white hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-400/40 backdrop-blur-md transition-all shadow-sm active:scale-95 text-shadow-contrast cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>添加网址</span>
           </button>
         )}
 
-        {/* + 新建分类 Button (Solid Violet/Indigo Pill) */}
-        <button
-          type="button"
-          onClick={onOpenCreateFolder}
-          className="flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-[0_2px_12px_rgba(139,92,246,0.3)] hover:brightness-110 active:scale-95 transition-all text-shadow-contrast"
-        >
-          <Plus className="h-4 w-4" />
-          <span>新建分类</span>
-        </button>
-
-        {/* 批量管理 Toggle Button */}
-        {onToggleBatchMode && (
-          <button
-            type="button"
-            onClick={onToggleBatchMode}
-            className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all shadow-sm text-shadow-contrast cursor-pointer ${
-              isBatchMode
-                ? "border-violet-600 bg-violet-600 text-white shadow-[0_2px_12px_rgba(139,92,246,0.4)]"
-                : "border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 text-zinc-800 dark:text-white hover:border-violet-400/40"
-            }`}
-            title={isBatchMode ? "完成批量管理" : "开启批量管理"}
-          >
-            <CheckSquare className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{isBatchMode ? "完成管理" : "批量管理"}</span>
-          </button>
-        )}
-
-        {/* Sort Dropdown */}
+        {/* Consolidated Options & View Round Button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all shadow-sm text-shadow-contrast ${
-                sortBy !== "default"
+              className={`relative flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-md shadow-sm transition-all active:scale-95 cursor-pointer ${
+                isBatchMode
+                  ? "border-violet-600 bg-violet-600 text-white shadow-[0_2px_12px_rgba(139,92,246,0.35)]"
+                  : sortBy !== "default"
                   ? "border-violet-500/50 bg-violet-500/15 text-violet-700 dark:text-violet-300"
-                  : "border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 text-zinc-800 dark:text-white hover:border-violet-400/40"
+                  : "border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-violet-600 dark:hover:text-violet-400 hover:border-violet-400/40"
               }`}
-              title="排序方式"
+              title="功能菜单与排序"
+              aria-label="功能菜单与排序"
             >
-              <ArrowUpDown className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">
-                {sortBy === "clicks-desc"
-                  ? "按访问频次"
-                  : sortBy === "time-desc"
-                  ? "最新添加"
-                  : sortBy === "time-asc"
-                  ? "最早添加"
-                  : "排序"}
-              </span>
+              <LayoutGrid className="h-4 w-4" />
+              {isBatchMode && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"></span>
+                </span>
+              )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+
+          <DropdownMenuContent align="end" className="w-52 p-1.5">
+            {/* Quick Actions */}
+            <div className="px-2 py-1 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
+              快捷操作
+            </div>
+
+            <DropdownMenuItem
+              onClick={onOpenCreateFolder}
+              className="flex items-center gap-2 text-xs font-medium cursor-pointer rounded-lg py-2 hover:bg-violet-50 dark:hover:bg-violet-950/40 focus:bg-violet-50 dark:focus:bg-violet-950/40"
+            >
+              <FolderPlus className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+              <span>新建分类</span>
+            </DropdownMenuItem>
+
+            {onToggleBatchMode && (
+              <DropdownMenuItem
+                onClick={onToggleBatchMode}
+                className="flex items-center justify-between text-xs font-medium cursor-pointer rounded-lg py-2 hover:bg-violet-50 dark:hover:bg-violet-950/40 focus:bg-violet-50 dark:focus:bg-violet-950/40"
+              >
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>{isBatchMode ? "退出批量管理" : "批量管理"}</span>
+                </div>
+                {isBatchMode && (
+                  <span className="rounded-full bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                    进行中
+                  </span>
+                )}
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuSeparator className="my-1.5" />
+
+            {/* Sort Section */}
+            <div className="px-2 py-1 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 flex items-center justify-between">
+              <span>排序方式</span>
+              <ArrowUpDown className="h-3 w-3" />
+            </div>
+
             <DropdownMenuItem
               onClick={() => onSortChange("default")}
-              className="flex items-center justify-between text-xs font-medium cursor-pointer"
+              className="flex items-center justify-between text-xs font-medium cursor-pointer rounded-lg py-1.5"
             >
               <div className="flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
@@ -271,11 +283,9 @@ export function FolderNav({
               {sortBy === "default" && <Check className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />}
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
-
             <DropdownMenuItem
               onClick={() => onSortChange("time-desc")}
-              className="flex items-center justify-between text-xs font-medium cursor-pointer"
+              className="flex items-center justify-between text-xs font-medium cursor-pointer rounded-lg py-1.5"
             >
               <div className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 text-sky-500 dark:text-sky-400" />
@@ -286,7 +296,7 @@ export function FolderNav({
 
             <DropdownMenuItem
               onClick={() => onSortChange("time-asc")}
-              className="flex items-center justify-between text-xs font-medium cursor-pointer"
+              className="flex items-center justify-between text-xs font-medium cursor-pointer rounded-lg py-1.5"
             >
               <div className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
@@ -295,11 +305,9 @@ export function FolderNav({
               {sortBy === "time-asc" && <Check className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />}
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
-
             <DropdownMenuItem
               onClick={() => onSortChange("clicks-desc")}
-              className="flex items-center justify-between text-xs font-medium cursor-pointer"
+              className="flex items-center justify-between text-xs font-medium cursor-pointer rounded-lg py-1.5"
             >
               <div className="flex items-center gap-2">
                 <Flame className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
@@ -309,14 +317,6 @@ export function FolderNav({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* View Grid Icon */}
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 shadow-sm"
-          title="网格视图"
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </div>
       </div>
     </div>
   );
