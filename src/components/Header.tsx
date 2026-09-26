@@ -21,6 +21,7 @@ import {
   RefreshCw,
   LogOut,
   FileCode,
+  ChevronDown,
 } from "lucide-react";
 import { AuthUser, SyncStatus } from "@/hooks/useBookmarkStore";
 import {
@@ -375,16 +376,16 @@ export function Header({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 rounded-full border border-white/50 dark:border-white/10 bg-white/75 dark:bg-zinc-800/80 pl-2 pr-3 py-1.5 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-white hover:text-black dark:hover:text-zinc-200 hover:border-violet-500/40 transition-all shadow-sm"
+                  className="flex items-center gap-1.5 rounded-full border border-white/50 dark:border-white/10 bg-white/75 dark:bg-zinc-800/80 pl-1.5 pr-2.5 py-1 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-white hover:text-black dark:hover:text-zinc-200 hover:border-violet-500/40 transition-all shadow-sm cursor-pointer"
                   title="云端同步正常"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white font-bold text-xs uppercase shadow-sm">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white font-bold text-xs uppercase shadow-sm">
                     {user.username.slice(0, 1)}
                   </div>
-                  <span className="max-w-[80px] truncate text-xs font-semibold sm:text-sm">
+                  <span className="max-w-[80px] truncate text-xs font-semibold sm:text-sm leading-none">
                     {user.username}
                   </span>
-                  <span className="text-[10px] text-zinc-400">▼</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-400 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
