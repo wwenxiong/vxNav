@@ -12,7 +12,6 @@ import {
   Upload,
   RotateCcw,
   Sparkles,
-  Command,
   Compass,
   Sun,
   Moon,
@@ -148,15 +147,24 @@ export function Header({
 }: HeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const htmlFileInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const currentEngine =
     SEARCH_ENGINES.find((s) => s.id === settings.searchEngine) || SEARCH_ENGINES[0];
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && searchQuery.trim()) {
+  const handleExecuteSearch = () => {
+    if (searchQuery.trim()) {
       const currentEngine =
         SEARCH_ENGINES.find((s) => s.id === settings.searchEngine) || SEARCH_ENGINES[0];
       window.open(currentEngine.url + encodeURIComponent(searchQuery.trim()), "_blank");
+    } else {
+      searchInputRef.current?.focus();
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleExecuteSearch();
     }
   };
 
@@ -258,6 +266,7 @@ export function Header({
 
             {/* Search Input */}
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -266,11 +275,16 @@ export function Header({
               className="flex-1 bg-transparent py-2 px-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-400 outline-none font-medium text-shadow-contrast min-w-0"
             />
 
-            {/* Shortcut Indicator ⌘ K */}
-            <div className="pointer-events-none pr-3 flex items-center shrink-0">
-              <kbd className="hidden sm:inline-flex items-center gap-1 rounded-full bg-zinc-100/90 dark:bg-white/10 border border-zinc-200/60 dark:border-white/10 px-2 py-0.5 text-[11px] font-mono font-medium text-zinc-500 dark:text-zinc-400">
-                <Command className="h-3 w-3" /> K
-              </kbd>
+            {/* Magnifier Search Button */}
+            <div className="pr-1.5 flex items-center shrink-0">
+              <button
+                type="button"
+                onClick={handleExecuteSearch}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100/90 hover:bg-violet-600 dark:bg-white/10 dark:hover:bg-violet-600 text-zinc-500 hover:text-white dark:text-zinc-400 dark:hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                title="搜索"
+              >
+                <Search className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
