@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import { Bookmark, Folder } from "@/types";
 import { MoreVertical, Pin, Trash2, Edit3, Copy, Check, Globe, ExternalLink, Flame } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +59,27 @@ export function BookmarkCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
 
+  // Scroll-linked progress animation:
+  // Starts when card enters bottom of viewport ("start end", progress 0)
+  // Completes when card reaches 70% from top of viewport ("start 70%", progress 1)
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "start 70%"],
+  });
+
+  // Spring physics smoothing for seamless wheel tracking without stutter
+  // Optimized for high refresh rate displays (60Hz/120Hz/144Hz) and mouse wheel steps:
+  // Low mass (0.15) for zero-latency response, well-damped spring to eliminate jerky stops
+  const smoothProgress = useSpring(scrollYProgress, {
+    mass: 0.15,
+    stiffness: 120,
+    damping: 24,
+    restDelta: 0.0005,
+  });
+
+  // Smooth progression: 0.85 -> 1.0 scale, 0.5 -> 1.0 opacity
+  const scale = useTransform(smoothProgress, [0, 1], [0.85, 1]);
+  const opacity = useTransform(smoothProgress, [0, 1], [0.5, 1]);
 
   // Extract clean domain for display
   let domain = "";
@@ -133,7 +154,7 @@ export function BookmarkCard({
       onDragEnter={(e) => onDragEnter?.(e, bookmark.id)}
       onDragLeave={onDragLeave}
       onDrop={handleDropInternal}
-      className={`relative rounded-2xl transition-[opacity,box-shadow,transform] duration-200 ease-out ${
+      className={`relative rounded-2xl transition-[opacity,box-shadow] duration-200 ${
         isDragging
           ? "opacity-35 scale-95"
           : isDragOver
@@ -145,24 +166,15 @@ export function BookmarkCard({
     >
       <motion.div
         ref={cardRef}
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-        viewport={{ once: true, margin: "0px 0px -40px 0px" }}
-        transition={{
-          duration: 0.32,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        whileHover={{
-          y: isDragging ? 0 : -4,
-          transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
-        }}
-        whileTap={{ scale: 0.98 }}
         style={{
+          scale,
+          opacity,
           transformOrigin: "center top",
           willChange: "transform, opacity",
         }}
+        whileHover={{ y: isDragging ? 0 : -3 }}
         onClick={handleCardClick}
-        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border select-none transition-[border-color,background-color,box-shadow] duration-200 ease-out ${
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border transition-[border-color,background-color,box-shadow] duration-200 select-none ${
           isDragging
             ? "border-dashed border-violet-500 bg-violet-500/10 cursor-grabbing"
             : isDragOver
@@ -172,7 +184,7 @@ export function BookmarkCard({
             : isBatchMode
             ? "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 cursor-pointer"
             : "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 hover:shadow-[0_12px_30px_-5px_rgba(139,92,246,0.18),0_4px_20px_rgba(0,0,0,0.06)] cursor-grab active:cursor-grabbing"
-        } p-4 sm:p-4.5 backdrop-blur-xl`}
+        } p-4 sm:p-4.5 backdrop-blur-xl transform-gpu`}
       >
         {/* Batch Selection Checkbox Indicator */}
         {isBatchMode && (
