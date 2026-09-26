@@ -124,8 +124,8 @@ export function DashboardWidget() {
     <>
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6 select-none">
         {/* Left Card: Welcome / Daily Inspiration Banner */}
-        <div className="w-full md:w-auto md:max-w-[440px] flex items-center justify-between overflow-hidden rounded-3xl border border-white/70 dark:border-white/15 bg-white/75 dark:bg-zinc-900/70 p-4 sm:p-4.5 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all hover:border-violet-400/40">
-          <div className="flex items-center gap-3.5 min-w-0">
+        <div className="w-full md:w-auto md:max-w-[510px] flex items-center justify-between overflow-hidden rounded-3xl border border-white/70 dark:border-white/15 bg-white/75 dark:bg-zinc-900/70 p-4 sm:p-4.5 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all hover:border-violet-400/40">
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
             {/* Scenic Mountain Squircle Thumbnail */}
             <div className="relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-2xl border border-white/50 dark:border-white/10 shadow-sm">
               <img
@@ -137,11 +137,11 @@ export function DashboardWidget() {
             </div>
 
             {/* Greeting & Subtitle */}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 pr-1">
               <h2 className="text-base sm:text-lg font-bold tracking-tight text-zinc-900 dark:text-white text-shadow-contrast">
                 你好，欢迎回来！
               </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-tight text-shadow-contrast mt-0.5 line-clamp-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-tight text-shadow-contrast mt-0.5 whitespace-normal sm:whitespace-nowrap">
                 收藏好用的网站，让工作更高效，生活更有趣。
               </p>
               {/* Pill Tag */}
