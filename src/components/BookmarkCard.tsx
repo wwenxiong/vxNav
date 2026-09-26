@@ -29,6 +29,9 @@ interface BookmarkCardProps {
   onDrop?: (e: React.DragEvent, id: string) => void;
   isDragging?: boolean;
   isDragOver?: boolean;
+  isBatchMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function BookmarkCard({
@@ -47,6 +50,9 @@ export function BookmarkCard({
   onDrop,
   isDragging = false,
   isDragOver = false,
+  isBatchMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: BookmarkCardProps) {
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -121,6 +127,10 @@ export function BookmarkCard({
     if (target.closest("[data-no-card-click]")) {
       return;
     }
+    if (isBatchMode) {
+      onToggleSelect?.(bookmark.id);
+      return;
+    }
     onVisit(bookmark.id);
     window.open(bookmark.url, "_blank", "noopener,noreferrer");
   };
@@ -134,7 +144,7 @@ export function BookmarkCard({
 
   return (
     <div
-      draggable={draggable}
+      draggable={!isBatchMode && draggable}
       onDragStart={handleDragStartInternal}
       onDragEnd={handleDragEndInternal}
       onDragOver={handleDragOverInternal}
@@ -146,6 +156,8 @@ export function BookmarkCard({
           ? "opacity-35 scale-95"
           : isDragOver
           ? "ring-2 ring-violet-500 scale-[1.02] shadow-[0_0_25px_rgba(139,92,246,0.35)]"
+          : isSelected
+          ? "ring-2 ring-violet-600 dark:ring-violet-400 scale-[1.01] shadow-[0_4px_20px_rgba(139,92,246,0.25)]"
           : ""
       }`}
     >
@@ -163,9 +175,35 @@ export function BookmarkCard({
             ? "border-dashed border-violet-500 bg-violet-500/10 cursor-grabbing"
             : isDragOver
             ? "border-violet-500 bg-white/95 dark:bg-zinc-800/95"
+            : isSelected
+            ? "border-violet-500/80 bg-violet-500/[0.08] dark:bg-violet-500/[0.15] cursor-pointer"
+            : isBatchMode
+            ? "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 cursor-pointer"
             : "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 hover:shadow-[0_12px_30px_-5px_rgba(139,92,246,0.18),0_4px_20px_rgba(0,0,0,0.06)] cursor-grab active:cursor-grabbing"
         } p-4 sm:p-4.5 backdrop-blur-xl`}
       >
+        {/* Batch Selection Checkbox Indicator */}
+        {isBatchMode && (
+          <div
+            data-no-card-click="true"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.(bookmark.id);
+            }}
+            className="absolute top-3.5 right-3.5 z-30 flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+            title={isSelected ? "取消选择" : "选择"}
+          >
+            <div
+              className={`flex h-5 w-5 items-center justify-center rounded-md border transition-all ${
+                isSelected
+                  ? "border-violet-600 bg-violet-600 text-white shadow-sm shadow-violet-500/40"
+                  : "border-zinc-300 dark:border-zinc-600 bg-white/90 dark:bg-zinc-800/90 hover:border-violet-500"
+              }`}
+            >
+              {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+            </div>
+          </div>
+        )}
       {/* Top row: Icon, Title, and Actions */}
       <div className="flex items-start justify-between gap-2.5">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -203,26 +241,27 @@ export function BookmarkCard({
           </div>
         </div>
 
-        {/* Action dropdown and pin badge */}
-        <div data-no-card-click="true" className="shrink-0 flex items-center gap-1">
-          {bookmark.pinned && (
-            <span
-              title="已置顶"
-              className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400"
-            >
-              <Pin className="h-3 w-3 fill-current rotate-45" />
-            </span>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="rounded-lg p-1 text-zinc-400 dark:text-zinc-400 opacity-60 transition-all hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white hover:opacity-100 focus:opacity-100"
-                aria-label="操作菜单"
+        {/* Action dropdown and pin badge (hide in batch mode to avoid collision with checkbox) */}
+        {!isBatchMode && (
+          <div data-no-card-click="true" className="shrink-0 flex items-center gap-1">
+            {bookmark.pinned && (
+              <span
+                title="已置顶"
+                className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400"
               >
-                <MoreVertical className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
+                <Pin className="h-3 w-3 fill-current rotate-45" />
+              </span>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded-lg p-1 text-zinc-400 dark:text-zinc-400 opacity-60 transition-all hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white hover:opacity-100 focus:opacity-100"
+                  aria-label="操作菜单"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
               <DropdownMenuItem
                 onClick={(e) => {
@@ -269,6 +308,7 @@ export function BookmarkCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        )}
       </div>
 
       {/* Description */}

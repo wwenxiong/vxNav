@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Folder, SortOption } from "@/types";
-import { Layers, Plus, Edit2, Pin, ArrowUpDown, Clock, Flame, Check, Sparkles, LayoutGrid } from "lucide-react";
+import { Layers, Plus, Edit2, Pin, ArrowUpDown, Clock, Flame, Check, Sparkles, LayoutGrid, CheckSquare } from "lucide-react";
 import { motion } from "motion/react";
 import {
   DropdownMenu,
@@ -25,6 +25,8 @@ interface FolderNavProps {
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   onDropBookmarkToFolder?: (folderId: string) => void;
+  isBatchMode?: boolean;
+  onToggleBatchMode?: () => void;
 }
 
 export function FolderNav({
@@ -40,6 +42,8 @@ export function FolderNav({
   sortBy,
   onSortChange,
   onDropBookmarkToFolder,
+  isBatchMode = false,
+  onToggleBatchMode,
 }: FolderNavProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
@@ -213,6 +217,23 @@ export function FolderNav({
           <Plus className="h-4 w-4" />
           <span>新建分类</span>
         </button>
+
+        {/* 批量管理 Toggle Button */}
+        {onToggleBatchMode && (
+          <button
+            type="button"
+            onClick={onToggleBatchMode}
+            className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all shadow-sm text-shadow-contrast cursor-pointer ${
+              isBatchMode
+                ? "border-violet-600 bg-violet-600 text-white shadow-[0_2px_12px_rgba(139,92,246,0.4)]"
+                : "border-white/60 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 text-zinc-800 dark:text-white hover:border-violet-400/40"
+            }`}
+            title={isBatchMode ? "完成批量管理" : "开启批量管理"}
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{isBatchMode ? "完成管理" : "批量管理"}</span>
+          </button>
+        )}
 
         {/* Sort Dropdown */}
         <DropdownMenu>

@@ -13,6 +13,7 @@ import FolderModal from "@/components/FolderModal";
 import BackgroundModal from "@/components/BackgroundModal";
 import BookmarkletModal from "@/components/BookmarkletModal";
 import AuthModal from "@/components/AuthModal";
+import BatchActionBar from "@/components/BatchActionBar";
 import ClickSpark from "@/components/ui/click-spark";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Pin, FolderSearch, BookmarkPlus, Loader2, ChevronRight } from "lucide-react";
@@ -34,6 +35,9 @@ function NavigationContent() {
     recordVisit,
     reorderBookmarks,
     moveBookmarkToFolder,
+    batchDeleteBookmarks,
+    batchMoveBookmarks,
+    batchTogglePinBookmarks,
     addFolder,
     updateFolder,
     deleteFolder,
@@ -110,6 +114,40 @@ function NavigationContent() {
     setDraggedId(null);
     setDragOverCardId(null);
     setDragOverSectionFolderId(null);
+  };
+
+  // Batch Management state
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBatchMove = (targetFolderId: string) => {
+    batchMoveBookmarks(selectedIds, targetFolderId);
+    setSelectedIds([]);
+  };
+
+  const handleBatchDelete = () => {
+    batchDeleteBookmarks(selectedIds);
+    setSelectedIds([]);
+  };
+
+  const handleBatchTogglePin = (pinned: boolean) => {
+    batchTogglePinBookmarks(selectedIds, pinned);
+    setSelectedIds([]);
+  };
+
+  const handleExitBatchMode = () => {
+    setIsBatchMode(false);
+    setSelectedIds([]);
   };
 
   // Quick Add from Bookmarklet / URL query
@@ -343,6 +381,11 @@ function NavigationContent() {
             sortBy={sortBy}
             onSortChange={handleSortChange}
             onDropBookmarkToFolder={handleDropToFolder}
+            isBatchMode={isBatchMode}
+            onToggleBatchMode={() => {
+              setIsBatchMode((prev) => !prev);
+              setSelectedIds([]);
+            }}
           />
         </div>
 
@@ -446,6 +489,9 @@ function NavigationContent() {
                         onDrop={handleCardDrop}
                         isDragging={draggedId === bm.id}
                         isDragOver={dragOverCardId === bm.id}
+                        isBatchMode={isBatchMode}
+                        isSelected={selectedIds.includes(bm.id)}
+                        onToggleSelect={handleToggleSelect}
                       />
                     ))}
                   </div>
@@ -548,6 +594,9 @@ function NavigationContent() {
                           onDrop={handleCardDrop}
                           isDragging={draggedId === bm.id}
                           isDragOver={dragOverCardId === bm.id}
+                          isBatchMode={isBatchMode}
+                          isSelected={selectedIds.includes(bm.id)}
+                          onToggleSelect={handleToggleSelect}
                         />
                       ))}
                     </div>
@@ -627,6 +676,9 @@ function NavigationContent() {
                           onDrop={handleCardDrop}
                           isDragging={draggedId === bm.id}
                           isDragOver={dragOverCardId === bm.id}
+                          isBatchMode={isBatchMode}
+                          isSelected={selectedIds.includes(bm.id)}
+                          onToggleSelect={handleToggleSelect}
                         />
                       ))}
                     </div>
@@ -675,6 +727,9 @@ function NavigationContent() {
                     onDrop={handleCardDrop}
                     isDragging={draggedId === bm.id}
                     isDragOver={dragOverCardId === bm.id}
+                    isBatchMode={isBatchMode}
+                    isSelected={selectedIds.includes(bm.id)}
+                    onToggleSelect={handleToggleSelect}
                   />
                 ))}
               </div>
@@ -682,6 +737,23 @@ function NavigationContent() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Floating Batch Action Toolbar */}
+      <AnimatePresence>
+        {isBatchMode && (
+          <BatchActionBar
+            selectedIds={selectedIds}
+            totalVisibleCount={filteredBookmarks.length}
+            folders={folders}
+            onSelectAll={() => setSelectedIds(filteredBookmarks.map((b) => b.id))}
+            onClearSelection={handleClearSelection}
+            onBatchMove={handleBatchMove}
+            onBatchDelete={handleBatchDelete}
+            onBatchTogglePin={handleBatchTogglePin}
+            onExitBatchMode={handleExitBatchMode}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Decorative Corner Text from Reference Mockup */}
       <div className="pointer-events-none fixed bottom-4 left-6 z-20 hidden md:block text-xs font-serif italic text-white/50 dark:text-white/40 select-none tracking-wider text-shadow-contrast">
