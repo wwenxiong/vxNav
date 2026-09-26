@@ -32,6 +32,8 @@ function NavigationContent() {
     deleteBookmark,
     togglePin,
     recordVisit,
+    reorderBookmarks,
+    moveBookmarkToFolder,
     addFolder,
     updateFolder,
     deleteFolder,
@@ -63,6 +65,52 @@ function NavigationContent() {
 
   const [backgroundModalOpen, setBackgroundModalOpen] = useState(false);
   const [bookmarkletModalOpen, setBookmarkletModalOpen] = useState(false);
+
+  // Drag and Drop state
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
+  const [dragOverSectionFolderId, setDragOverSectionFolderId] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id);
+    e.dataTransfer.setData("text/plain", id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverCardId(null);
+    setDragOverSectionFolderId(null);
+  };
+
+  const handleCardDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleCardDragEnter = (e: React.DragEvent, targetId: string) => {
+    if (draggedId && draggedId !== targetId) {
+      setDragOverCardId(targetId);
+    }
+  };
+
+  const handleCardDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const sourceId = draggedId || e.dataTransfer.getData("text/plain");
+    if (sourceId && sourceId !== targetId) {
+      reorderBookmarks(sourceId, targetId);
+    }
+    setDraggedId(null);
+    setDragOverCardId(null);
+    setDragOverSectionFolderId(null);
+  };
+
+  const handleDropToFolder = (targetFolderId: string) => {
+    if (draggedId) {
+      moveBookmarkToFolder(draggedId, targetFolderId);
+    }
+    setDraggedId(null);
+    setDragOverCardId(null);
+    setDragOverSectionFolderId(null);
+  };
 
   // Quick Add from Bookmarklet / URL query
   useEffect(() => {
@@ -294,6 +342,7 @@ function NavigationContent() {
             onOpenAddBookmark={handleCreateBookmark}
             sortBy={sortBy}
             onSortChange={handleSortChange}
+            onDropBookmarkToFolder={handleDropToFolder}
           />
         </div>
 
@@ -389,6 +438,14 @@ function NavigationContent() {
                         onEdit={handleEditBookmark}
                         onDelete={deleteBookmark}
                         onTogglePin={togglePin}
+                        draggable={!searchQuery.trim()}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={handleCardDragOver}
+                        onDragEnter={handleCardDragEnter}
+                        onDrop={handleCardDrop}
+                        isDragging={draggedId === bm.id}
+                        isDragOver={dragOverCardId === bm.id}
                       />
                     ))}
                   </div>
@@ -411,9 +468,43 @@ function NavigationContent() {
                 else if (/资讯|新闻|社区|博客/i.test(folder.name)) categoryIcon = "📰";
 
                 const hasCustomEmoji = /^[\p{Emoji}\u2600-\u27BF]/u.test(folder.name.trim());
+                const isSectionDragOver =
+                  dragOverSectionFolderId === folder.id &&
+                  draggedId &&
+                  bookmarks.find((b) => b.id === draggedId)?.folderId !== folder.id;
 
                 return (
-                  <section key={folder.id} className="space-y-3">
+                  <section
+                    key={folder.id}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (dragOverSectionFolderId !== folder.id) {
+                        setDragOverSectionFolderId(folder.id);
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                      if (dragOverSectionFolderId === folder.id) {
+                        setDragOverSectionFolderId(null);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const sourceId = draggedId || e.dataTransfer.getData("text/plain");
+                      if (sourceId) {
+                        moveBookmarkToFolder(sourceId, folder.id);
+                      }
+                      setDraggedId(null);
+                      setDragOverCardId(null);
+                      setDragOverSectionFolderId(null);
+                    }}
+                    className={`space-y-3 p-2 -m-2 rounded-3xl transition-all duration-200 ${
+                      isSectionDragOver
+                        ? "bg-violet-500/10 dark:bg-violet-500/15 ring-2 ring-dashed ring-violet-500/50"
+                        : ""
+                    }`}
+                  >
                     <div className="flex items-center justify-between group/header">
                       <button
                         type="button"
@@ -449,6 +540,14 @@ function NavigationContent() {
                           onEdit={handleEditBookmark}
                           onDelete={deleteBookmark}
                           onTogglePin={togglePin}
+                          draggable={!searchQuery.trim()}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={handleCardDragOver}
+                          onDragEnter={handleCardDragEnter}
+                          onDrop={handleCardDrop}
+                          isDragging={draggedId === bm.id}
+                          isDragOver={dragOverCardId === bm.id}
                         />
                       ))}
                     </div>
@@ -462,8 +561,42 @@ function NavigationContent() {
                 const orphanBms = sortBookmarks(bookmarks.filter((b) => !knownFolderIds.has(b.folderId)));
                 if (orphanBms.length === 0) return null;
 
+                const isUncategorizedDragOver =
+                  dragOverSectionFolderId === "uncategorized" &&
+                  draggedId &&
+                  Boolean(bookmarks.find((b) => b.id === draggedId)?.folderId);
+
                 return (
-                  <section className="space-y-3">
+                  <section
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (dragOverSectionFolderId !== "uncategorized") {
+                        setDragOverSectionFolderId("uncategorized");
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                      if (dragOverSectionFolderId === "uncategorized") {
+                        setDragOverSectionFolderId(null);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const sourceId = draggedId || e.dataTransfer.getData("text/plain");
+                      if (sourceId) {
+                        moveBookmarkToFolder(sourceId, "");
+                      }
+                      setDraggedId(null);
+                      setDragOverCardId(null);
+                      setDragOverSectionFolderId(null);
+                    }}
+                    className={`space-y-3 p-2 -m-2 rounded-3xl transition-all duration-200 ${
+                      isUncategorizedDragOver
+                        ? "bg-violet-500/10 dark:bg-violet-500/15 ring-2 ring-dashed ring-violet-500/50"
+                        : ""
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white text-shadow-contrast flex items-center gap-1.5">
@@ -486,6 +619,14 @@ function NavigationContent() {
                           onEdit={handleEditBookmark}
                           onDelete={deleteBookmark}
                           onTogglePin={togglePin}
+                          draggable={!searchQuery.trim()}
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={handleCardDragOver}
+                          onDragEnter={handleCardDragEnter}
+                          onDrop={handleCardDrop}
+                          isDragging={draggedId === bm.id}
+                          isDragOver={dragOverCardId === bm.id}
                         />
                       ))}
                     </div>
@@ -526,6 +667,14 @@ function NavigationContent() {
                     onEdit={handleEditBookmark}
                     onDelete={deleteBookmark}
                     onTogglePin={togglePin}
+                    draggable={!searchQuery.trim()}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleCardDragOver}
+                    onDragEnter={handleCardDragEnter}
+                    onDrop={handleCardDrop}
+                    isDragging={draggedId === bm.id}
+                    isDragOver={dragOverCardId === bm.id}
                   />
                 ))}
               </div>

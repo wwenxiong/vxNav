@@ -408,6 +408,35 @@ export function useBookmarkStore() {
     );
   }, []);
 
+  const reorderBookmarks = useCallback((sourceId: string, targetId: string) => {
+    setBookmarks((prev) => {
+      const sourceIndex = prev.findIndex((b) => b.id === sourceId);
+      const targetIndex = prev.findIndex((b) => b.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) return prev;
+
+      const sourceBookmark = prev[sourceIndex];
+      const targetBookmark = prev[targetIndex];
+
+      const updatedSource =
+        sourceBookmark.folderId !== targetBookmark.folderId
+          ? { ...sourceBookmark, folderId: targetBookmark.folderId, updatedAt: Date.now() }
+          : sourceBookmark;
+
+      const newBookmarks = [...prev];
+      newBookmarks.splice(sourceIndex, 1);
+      newBookmarks.splice(targetIndex, 0, updatedSource);
+      return newBookmarks;
+    });
+  }, []);
+
+  const moveBookmarkToFolder = useCallback((bookmarkId: string, targetFolderId: string) => {
+    setBookmarks((prev) =>
+      prev.map((b) =>
+        b.id === bookmarkId ? { ...b, folderId: targetFolderId, updatedAt: Date.now() } : b
+      )
+    );
+  }, []);
+
   // Folder actions
   const addFolder = useCallback((name: string) => {
     const newFolder: Folder = {
@@ -706,6 +735,8 @@ export function useBookmarkStore() {
     deleteBookmark,
     togglePin,
     recordVisit,
+    reorderBookmarks,
+    moveBookmarkToFolder,
     addFolder,
     updateFolder,
     deleteFolder,

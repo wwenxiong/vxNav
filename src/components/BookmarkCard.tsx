@@ -20,6 +20,15 @@ interface BookmarkCardProps {
   onEdit: (bookmark: Bookmark) => void;
   onDelete: (id: string) => void;
   onTogglePin: (id: string) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent, id: string) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragEnter?: (e: React.DragEvent, id: string) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent, id: string) => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
 }
 
 export function BookmarkCard({
@@ -29,10 +38,20 @@ export function BookmarkCard({
   onEdit,
   onDelete,
   onTogglePin,
+  draggable = true,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragEnter,
+  onDragLeave,
+  onDrop,
+  isDragging = false,
+  isDragOver = false,
 }: BookmarkCardProps) {
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
 
   // Scroll-linked progress animation:
   // Starts when card enters bottom of viewport ("start end", progress 0)
@@ -64,7 +83,40 @@ export function BookmarkCard({
   const cleanTitle = stripEmojis(bookmark.title) || domain || "网站链接";
   const cleanDescription = stripEmojis(bookmark.description || "");
 
+  const handleDragStartInternal = (e: React.DragEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-no-card-click]")) {
+      e.preventDefault();
+      return;
+    }
+    isDraggingRef.current = true;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", bookmark.id);
+    onDragStart?.(e, bookmark.id);
+  };
+
+  const handleDragEndInternal = (e: React.DragEvent) => {
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 150);
+    onDragEnd?.(e);
+  };
+
+  const handleDragOverInternal = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    onDragOver?.(e);
+  };
+
+  const handleDropInternal = (e: React.DragEvent) => {
+    e.preventDefault();
+    onDrop?.(e, bookmark.id);
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
+    if (isDraggingRef.current) {
+      return;
+    }
     const target = e.target as HTMLElement;
     if (target.closest("[data-no-card-click]")) {
       return;
@@ -81,17 +133,39 @@ export function BookmarkCard({
   };
 
   return (
-    <motion.div
-      ref={cardRef}
-      style={{
-        scale,
-        opacity,
-        transformOrigin: "center top",
-      }}
-      whileHover={{ y: -3 }}
-      onClick={handleCardClick}
-      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 p-4 sm:p-4.5 backdrop-blur-xl transition-shadow duration-300 hover:border-violet-400/50 hover:shadow-[0_12px_30px_-5px_rgba(139,92,246,0.18),0_4px_20px_rgba(0,0,0,0.06)] cursor-pointer select-none"
+    <div
+      draggable={draggable}
+      onDragStart={handleDragStartInternal}
+      onDragEnd={handleDragEndInternal}
+      onDragOver={handleDragOverInternal}
+      onDragEnter={(e) => onDragEnter?.(e, bookmark.id)}
+      onDragLeave={onDragLeave}
+      onDrop={handleDropInternal}
+      className={`relative rounded-2xl transition-all duration-200 ${
+        isDragging
+          ? "opacity-35 scale-95"
+          : isDragOver
+          ? "ring-2 ring-violet-500 scale-[1.02] shadow-[0_0_25px_rgba(139,92,246,0.35)]"
+          : ""
+      }`}
     >
+      <motion.div
+        ref={cardRef}
+        style={{
+          scale,
+          opacity,
+          transformOrigin: "center top",
+        }}
+        whileHover={{ y: isDragging ? 0 : -3 }}
+        onClick={handleCardClick}
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border transition-all duration-200 select-none ${
+          isDragging
+            ? "border-dashed border-violet-500 bg-violet-500/10 cursor-grabbing"
+            : isDragOver
+            ? "border-violet-500 bg-white/95 dark:bg-zinc-800/95"
+            : "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 hover:shadow-[0_12px_30px_-5px_rgba(139,92,246,0.18),0_4px_20px_rgba(0,0,0,0.06)] cursor-grab active:cursor-grabbing"
+        } p-4 sm:p-4.5 backdrop-blur-xl`}
+      >
       {/* Top row: Icon, Title, and Actions */}
       <div className="flex items-start justify-between gap-2.5">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -230,7 +304,8 @@ export function BookmarkCard({
         </span>
       </div>
     </motion.div>
-  );
+  </div>
+);
 }
 
 export default BookmarkCard;

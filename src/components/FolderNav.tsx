@@ -24,6 +24,7 @@ interface FolderNavProps {
   onOpenAddBookmark?: () => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
+  onDropBookmarkToFolder?: (folderId: string) => void;
 }
 
 export function FolderNav({
@@ -38,9 +39,11 @@ export function FolderNav({
   onOpenAddBookmark,
   sortBy,
   onSortChange,
+  onDropBookmarkToFolder,
 }: FolderNavProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
 
   // Compute animated indicator position
   useEffect(() => {
@@ -128,6 +131,7 @@ export function FolderNav({
         {/* User Folders */}
         {folders.map((folder) => {
           const isActive = activeFolderId === folder.id;
+          const isDragOverThis = dragOverFolderId === folder.id;
           const count = folderCounts[folder.id] || 0;
 
           return (
@@ -136,7 +140,28 @@ export function FolderNav({
                 type="button"
                 data-folder-id={folder.id}
                 onClick={() => onSelectFolder(folder.id)}
-                className={`${tabBase} ${isActive ? tabActive : tabInactive}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dragOverFolderId !== folder.id) {
+                    setDragOverFolderId(folder.id);
+                  }
+                }}
+                onDragLeave={() => {
+                  if (dragOverFolderId === folder.id) {
+                    setDragOverFolderId(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverFolderId(null);
+                  onDropBookmarkToFolder?.(folder.id);
+                }}
+                className={`${tabBase} ${isActive ? tabActive : tabInactive} ${
+                  isDragOverThis
+                    ? "ring-2 ring-violet-400 bg-violet-500/25 scale-105 transition-transform"
+                    : ""
+                }`}
               >
                 <span>{folder.name}</span>
                 <span
