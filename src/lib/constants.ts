@@ -53,4 +53,5 @@ export const DEFAULT_SETTINGS: Settings = {
   navOpacity: 0.6,
   cardOpacity: 0.45,
   modalOpacity: 0.85,
+  customWallpapers: [],
 };

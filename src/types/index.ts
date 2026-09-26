@@ -30,6 +30,7 @@ export interface Settings {
   navOpacity: number; // 0 to 1 (0 full transparent, 1 full opaque)
   cardOpacity: number; // 0 to 1
   modalOpacity: number; // 0 to 1
+  customWallpapers?: string[]; // Saved custom uploaded wallpapers
 }
 
 export interface MetadataResponse {

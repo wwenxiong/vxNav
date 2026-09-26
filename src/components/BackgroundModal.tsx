@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,9 @@ import {
   LayoutTemplate,
   AppWindow,
   CreditCard,
+  Trash2,
+  Plus,
+  Loader2,
 } from "lucide-react";
 
 interface BackgroundModalProps {
@@ -31,6 +34,54 @@ interface BackgroundModalProps {
   onUpdateSettings: (settings: Partial<Settings>) => void;
 }
 
+// Client-side image compression to prevent exceeding localStorage quota
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(result);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        try {
+          const webp = canvas.toDataURL("image/webp", 0.85);
+          if (webp.startsWith("data:image/webp")) {
+            resolve(webp);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = () => resolve(result);
+      img.src = result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function BackgroundModal({
   open,
   onOpenChange,
@@ -38,24 +89,75 @@ export function BackgroundModal({
   onUpdateSettings,
 }: BackgroundModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState("");
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Extract saved custom wallpapers and ensure current active custom wallpaper is preserved
+  const savedCustomWallpapers = useMemo(() => {
+    const list = [...(settings.customWallpapers || [])];
+    if (
+      settings.backgroundImage &&
+      !WALLPAPER_PRESETS.some((p) => p.url === settings.backgroundImage) &&
+      !list.includes(settings.backgroundImage)
+    ) {
+      list.unshift(settings.backgroundImage);
+    }
+    return list;
+  }, [settings.customWallpapers, settings.backgroundImage]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("图片大小不能超过 5MB");
+    if (file.size > 15 * 1024 * 1024) {
+      alert("图片过大，请选择 15MB 以内的图片");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        onUpdateSettings({ backgroundImage: dataUrl });
+    try {
+      setIsUploading(true);
+      const compressedDataUrl = await compressImage(file);
+      const currentList = settings.customWallpapers || [];
+      const updatedList = [
+        compressedDataUrl,
+        ...currentList.filter((item) => item !== compressedDataUrl),
+      ];
+      onUpdateSettings({
+        backgroundImage: compressedDataUrl,
+        customWallpapers: updatedList,
+      });
+    } catch (err) {
+      console.error("图片处理失败", err);
+      alert("图片处理失败，请重试");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
-    };
-    reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveCustomUrl = () => {
+    const trimmed = customUrlInput.trim();
+    if (!trimmed) return;
+    const currentList = settings.customWallpapers || [];
+    const updatedList = [trimmed, ...currentList.filter((item) => item !== trimmed)];
+    onUpdateSettings({
+      backgroundImage: trimmed,
+      customWallpapers: updatedList,
+    });
+    setCustomUrlInput("");
+  };
+
+  const handleDeleteCustomWallpaper = (e: React.MouseEvent, urlToDelete: string) => {
+    e.stopPropagation();
+    const currentList = settings.customWallpapers || [];
+    const updatedList = currentList.filter((item) => item !== urlToDelete);
+    const updates: Partial<Settings> = { customWallpapers: updatedList };
+    if (settings.backgroundImage === urlToDelete) {
+      updates.backgroundImage = updatedList[0] || DEFAULT_SETTINGS.backgroundImage;
+    }
+    onUpdateSettings(updates);
   };
 
   const handleReset = () => {
@@ -134,17 +236,41 @@ export function BackgroundModal({
             </div>
           </div>
 
-          {/* Custom URL or Local File Upload */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">自定义壁纸</label>
+          {/* Custom Wallpapers Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                <span>自定义壁纸</span>
+                <span className="text-[11px] font-normal text-zinc-500 dark:text-zinc-400">
+                  (已保存 {savedCustomWallpapers.length} 张)
+                </span>
+              </label>
+            </div>
+
+            {/* URL Input & Upload Controls */}
             <div className="flex gap-2">
               <input
                 type="text"
-                value={settings.backgroundImage}
-                onChange={(e) => onUpdateSettings({ backgroundImage: e.target.value })}
-                placeholder="输入图片链接 https://..."
+                value={customUrlInput}
+                onChange={(e) => setCustomUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSaveCustomUrl();
+                  }
+                }}
+                placeholder="输入网络图片链接 https://..."
                 className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700/80 bg-white/90 dark:bg-zinc-900/90 px-3.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors font-medium"
               />
+              {customUrlInput.trim() && (
+                <button
+                  type="button"
+                  onClick={handleSaveCustomUrl}
+                  className="flex items-center gap-1 rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 transition-colors shrink-0 shadow-sm cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>保存</span>
+                </button>
+              )}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -154,13 +280,73 @@ export function BackgroundModal({
               />
               <button
                 type="button"
+                disabled={isUploading}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/90 px-3 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors shrink-0"
+                className="flex items-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/90 px-3.5 py-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
               >
-                <Upload className="h-3.5 w-3.5" />
-                <span>上传图片</span>
+                {isUploading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-600 dark:text-violet-400" />
+                ) : (
+                  <Upload className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                )}
+                <span>{isUploading ? "处理中..." : "上传本地图片"}</span>
               </button>
             </div>
+
+            {/* Saved Custom Wallpapers Grid */}
+            {savedCustomWallpapers.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2.5 pt-1">
+                {savedCustomWallpapers.map((url, index) => {
+                  const isSelected = settings.backgroundImage === url;
+                  return (
+                    <div
+                      key={`${url.slice(0, 32)}-${index}`}
+                      onClick={() => onUpdateSettings({ backgroundImage: url })}
+                      className={`group relative h-20 overflow-hidden rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-violet-500 ring-2 ring-violet-500/50 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+                          : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={url}
+                        alt={`自定义壁纸 ${index + 1}`}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-between p-2">
+                        <span className="text-[11px] font-medium text-white truncate max-w-[70px]">
+                          自定义 {index + 1}
+                        </span>
+                      </div>
+
+                      {/* Selected Checkmark Badge */}
+                      {isSelected && (
+                        <div className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-white shadow">
+                          <Check className="h-2.5 w-2.5 stroke-[3]" />
+                        </div>
+                      )}
+
+                      {/* Delete Button on Hover */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteCustomWallpaper(e, url)}
+                        className="absolute left-1.5 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex h-5 w-5 items-center justify-center rounded-full bg-black/70 hover:bg-red-600 text-white/90 hover:text-white shadow-sm"
+                        title="删除此壁纸"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 p-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                <span>暂无已保存的自定义壁纸</span>
+                <span className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  点击上方「上传本地图片」或输入链接，壁纸将自动保存在此处随时复用
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Section: Background Effect Sliders */}
