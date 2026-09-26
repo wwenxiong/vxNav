@@ -1,4 +1,4 @@
-# ObsidianNav 浏览器一键收藏扩展 (Chrome / Edge)
+# WayPoint 浏览器一键收藏扩展 (Chrome / Edge)
 
 本目录为适用于 Google Chrome、Microsoft Edge、Brave 等基于 Chromium 内核浏览器的扩展程序源码。
 

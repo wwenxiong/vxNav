@@ -516,7 +516,7 @@ export function useBookmarkStore() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `obsidian-nav-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `waypoint-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [folders, bookmarks, settings]);

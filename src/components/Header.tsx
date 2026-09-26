@@ -224,11 +224,11 @@ export function Header({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)] text-shadow-contrast">
-                Obsidian<span className="text-violet-500 dark:text-violet-400">Nav</span>
+                Way<span className="text-violet-500 dark:text-violet-400">Point</span>
               </span>
             </div>
             <p className="hidden text-xs text-zinc-600 dark:text-zinc-300 font-medium sm:block text-shadow-contrast">
-              个人导航空间
+              记录每一次启航
             </p>
           </div>
         </div>

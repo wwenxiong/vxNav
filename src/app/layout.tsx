@@ -14,11 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ObsidianNav - 个人书签导航",
-  description: "支持跨端多设备同步、分类管理与快捷收藏的网址导航系统。",
-  icons: {
-    icon: "https://www.obsidianui.dev/icon.png",
-  },
+  title: "WayPoint - 个人书签导航",
+  description: "WayPoint - 记录每一次启航。支持跨端多设备同步、分类管理与快捷收藏的个人网址导航系统。",
 };
 
 export default function RootLayout({

@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "ObsidianNav 一键收藏助手",
+  "name": "WayPoint 一键收藏助手",
   "version": "1.0.0",
-  "description": "浏览任何网页时，一键将当前网站及图标收藏保存至 ObsidianNav 导航站",
+  "description": "浏览任何网页时，一键将当前网站及图标收藏保存至 WayPoint 导航站",
   "permissions": ["activeTab"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "一键收藏到 ObsidianNav"
+    "default_title": "一键收藏到 WayPoint"
   }
 }
