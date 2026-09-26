@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Bookmark, Folder } from "@/types";
-import { MoreVertical, Pin, Trash2, Edit3, Copy, Check, Globe, ExternalLink } from "lucide-react";
+import { MoreVertical, Pin, Trash2, Edit3, Copy, Check, Globe, ExternalLink, Flame } from "lucide-react";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import {
   DropdownMenu,
@@ -129,8 +129,16 @@ export function BookmarkCard({
           </div>
         </div>
 
-        {/* Action dropdown */}
-        <div data-no-card-click="true" className="shrink-0">
+        {/* Action dropdown and pin badge */}
+        <div data-no-card-click="true" className="shrink-0 flex items-center gap-1">
+          {bookmark.pinned && (
+            <span
+              title="已置顶"
+              className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400"
+            >
+              <Pin className="h-3 w-3 fill-current rotate-45" />
+            </span>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -194,19 +202,30 @@ export function BookmarkCard({
         {cleanDescription || "暂无描述"}
       </p>
 
-      {/* Card Footer: Folder Pill Tag on Left, External Link Icon on Right (matching reference mockup) */}
+      {/* Card Footer: Folder Pill Tag & Visit Count on Left, External Link Icon on Right */}
       <div className="mt-3 flex items-center justify-between text-[11px]">
-        {folder ? (
-          <span className="inline-flex items-center rounded-full bg-blue-100/70 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/40 px-2.5 py-0.5 text-[11px] font-semibold text-shadow-contrast">
-            {stripEmojis(folder.name)}
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-300 px-2.5 py-0.5 text-[11px] font-semibold">
-            常用
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 min-w-0">
+          {folder ? (
+            <span className="inline-flex items-center rounded-full bg-blue-100/70 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/40 px-2.5 py-0.5 text-[11px] font-semibold text-shadow-contrast truncate max-w-[85px]">
+              {stripEmojis(folder.name)}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-300 px-2.5 py-0.5 text-[11px] font-semibold">
+              常用
+            </span>
+          )}
 
-        <span className="flex items-center text-zinc-400 dark:text-zinc-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+          {/* 访问统计标签 */}
+          <span
+            title={`已访问 ${bookmark.clickCount || 0} 次`}
+            className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 dark:bg-amber-400/15 border border-amber-500/20 dark:border-amber-400/20 px-2 py-0.5 text-[10px] font-mono font-medium text-amber-700 dark:text-amber-300 shrink-0"
+          >
+            <Flame className="h-2.5 w-2.5 text-amber-500 fill-amber-500/40" />
+            <span>{bookmark.clickCount || 0} 次</span>
+          </span>
+        </div>
+
+        <span className="flex items-center text-zinc-400 dark:text-zinc-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors shrink-0">
           <ExternalLink className="h-3.5 w-3.5" />
         </span>
       </div>
