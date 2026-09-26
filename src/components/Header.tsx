@@ -217,8 +217,8 @@ export function Header({
       <div className="flex w-full items-center justify-between gap-6 px-6 py-4 sm:px-10">
         {/* Brand Logo */}
         <div className="flex items-center gap-3.5">
-          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-500 shadow-[0_0_20px_rgba(139,92,246,0.5)] border border-violet-400/40">
-            <Compass className="h-6 w-6 text-white" />
+          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.4)] border border-white/20 dark:border-white/15">
+            <img src="/icon.svg" alt="WayPoint" className="h-full w-full object-cover transition-transform hover:scale-105" />
             <div className="absolute inset-0 rounded-2xl bg-violet-400/20 blur-md -z-10" />
           </div>
           <div>
