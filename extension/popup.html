@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>收藏到 ObsidianNav</title>
+  <style>
+    body {
+      width: 320px;
+      margin: 0;
+      padding: 16px;
+      background: #09090b;
+      color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .logo svg {
+      width: 14px;
+      height: 14px;
+    }
+    .title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fafafa;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #a1a1aa;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+    }
+    input:focus {
+      border-color: #8b5cf6;
+    }
+    button {
+      width: 100%;
+      background: linear-gradient(to right, #8b5cf6, #6366f1);
+      border: none;
+      color: white;
+      padding: 9px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .footer {
+      margin-top: 10px;
+      font-size: 10px;
+      color: #71717a;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+      </svg>
+    </div>
+    <div class="title">收藏到 ObsidianNav</div>
+  </div>
+
+  <div class="field">
+    <label>网页标题</label>
+    <input id="title" type="text" placeholder="获取中..." />
+  </div>
+
+  <div class="field">
+    <label>网址链接 (URL)</label>
+    <input id="url" type="text" placeholder="获取中..." />
+  </div>
+
+  <button id="saveBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+      <line x1="12" x2="12" y1="7" y2="13"/>
+      <line x1="9" x2="15" y1="10" y2="10"/>
+    </svg>
+    <span>一键保存至导航站</span>
+  </button>
+  <div class="footer">点击将自动唤起导航站并预填保存</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

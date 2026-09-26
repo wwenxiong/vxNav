@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  /* ========== Light Theme (default) ========== */
+  :root {
+    --nav-opacity: 0.6;
+    --card-opacity: 0.45;
+    --modal-opacity: 0.85;
+
+    --background: #f5f5f7;
+    --foreground: #09090b;
+    --card: rgba(255, 255, 255, var(--card-opacity));
+    --card-foreground: #09090b;
+    --popover: rgba(255, 255, 255, var(--modal-opacity));
+    --popover-foreground: #09090b;
+    --primary: #7c3aed;
+    --primary-foreground: #ffffff;
+    --secondary: #ececee;
+    --secondary-foreground: #09090b;
+    --muted: #e4e4e7;
+    --muted-foreground: #3f3f46; /* High-contrast zinc-700 for light theme */
+    --accent: #6366f1;
+    --accent-foreground: #ffffff;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: rgba(0, 0, 0, 0.12);
+    --input: rgba(0, 0, 0, 0.06);
+    --placeholder: #71717a;
+    --ring: #7c3aed;
+    --radius: 0.75rem;
+
+    /* Adaptive Text Contrast Shadow (iOS / macOS desktop style) */
+    --text-contrast-shadow: 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 4px rgba(255, 255, 255, 0.8);
+
+    /* Glass tokens */
+    --glass-bg: rgba(255, 255, 255, var(--nav-opacity));
+    --glass-nav-bg: rgba(255, 255, 255, var(--nav-opacity));
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-card-bg: rgba(255, 255, 255, var(--card-opacity));
+    --glass-card-bg-end: rgba(245, 245, 247, var(--card-opacity));
+    --glass-card-border: rgba(255, 255, 255, 0.5);
+    --glass-modal-bg: rgba(255, 255, 255, var(--modal-opacity));
+    --glass-card-shadow: rgba(0, 0, 0, 0.08);
+    --glass-card-hover-border: rgba(124, 58, 237, 0.4);
+    --glass-card-hover-shadow: rgba(124, 58, 237, 0.12);
+    --overlay-color: 245, 245, 247;
+    --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  }
+
+  /* ========== Dark Theme ========== */
+  .dark {
+    --background: #09090b;
+    --foreground: #ffffff;
+    --card: rgba(18, 18, 22, var(--card-opacity));
+    --card-foreground: #ffffff;
+    --popover: rgba(18, 18, 22, var(--modal-opacity));
+    --popover-foreground: #ffffff;
+    --primary: #8b5cf6;
+    --primary-foreground: #ffffff;
+    --secondary: #27272a;
+    --secondary-foreground: #ffffff;
+    --muted: #1e1e24;
+    --muted-foreground: #d4d4d8; /* Bright silver in dark theme */
+    --accent: #6366f1;
+    --accent-foreground: #ffffff;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.12);
+    --placeholder: #d4d4d8;
+    --ring: #8b5cf6;
+    --radius: 0.75rem;
+
+    /* Adaptive Text Contrast Shadow (iOS / macOS desktop style for white text) */
+    --text-contrast-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
+
+    /* Glass tokens */
+    --glass-bg: rgba(18, 18, 24, var(--nav-opacity));
+    --glass-nav-bg: rgba(18, 18, 24, var(--nav-opacity));
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-card-bg: rgba(28, 28, 36, var(--card-opacity));
+    --glass-card-bg-end: rgba(18, 18, 24, var(--card-opacity));
+    --glass-card-border: rgba(255, 255, 255, 0.07);
+    --glass-modal-bg: rgba(18, 18, 24, var(--modal-opacity));
+    --glass-card-shadow: rgba(0, 0, 0, 0.5);
+    --glass-card-hover-border: rgba(168, 85, 247, 0.4);
+    --glass-card-hover-shadow: rgba(168, 85, 247, 0.15);
+    --overlay-color: 9, 9, 11;
+    --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  background-color: transparent;
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Theme-adaptive high-contrast placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder) !important;
+  opacity: 1 !important;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Frosted glassmorphism utility */
+.obsidian-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid var(--glass-border);
+}
+
+.obsidian-glass-card {
+  background: linear-gradient(135deg, var(--glass-card-bg) 0%, var(--glass-card-bg-end) 100%);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid var(--glass-card-border);
+  box-shadow: 0 4px 20px -2px var(--glass-card-shadow);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.obsidian-glass-card:hover {
+  border-color: var(--glass-card-hover-border);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -4px var(--glass-card-shadow), 0 0 20px -2px var(--glass-card-hover-shadow);
+}
+
+/* iOS/macOS Wallpaper Adaptive Text Shadow Utility */
+.text-shadow-contrast {
+  text-shadow: var(--text-contrast-shadow);
+}
+
+/* No-scrollbar utility */
+.noScrollbar::-webkit-scrollbar {
+  display: none;
+}
+.noScrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
