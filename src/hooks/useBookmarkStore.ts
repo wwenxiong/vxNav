@@ -57,9 +57,17 @@ export function useBookmarkStore() {
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  const localVersionRef = useRef<number>(1);
+  const localVersionRef = useRef<number>(0);
+  const isInitialSyncDoneRef = useRef<boolean>(false);
   const isPullingRef = useRef<boolean>(false);
+  const isPushingRef = useRef<boolean>(false);
   const syncDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const pendingPushDataRef = useRef<{
+    folders: Folder[];
+    bookmarks: Bookmark[];
+    settings: Settings;
+  } | null>(null);
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
 
   // Load from local storage
   useEffect(() => {
@@ -131,7 +139,7 @@ export function useBookmarkStore() {
     }
   }, []);
 
-  // Save changes
+  // Save changes to localStorage
   useEffect(() => {
     if (!isLoaded) return;
     try {
@@ -152,124 +160,144 @@ export function useBookmarkStore() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
-    } catch (e) {
-      console.error("Failed to save settings", e);
-    }
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+      } catch (e) {
+        console.error("Failed to save settings", e);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
   }, [settings, isLoaded]);
 
-  // 1. Check user login status on mount & pull initial cloud data
+  // Set up BroadcastChannel for instant same-device cross-tab synchronization
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user) {
-          setUser(data.user);
-          setSyncStatus("syncing");
-          fetch("/api/sync")
-            .then((res) => (res.ok ? res.json() : null))
-            .then((cloudData) => {
-              if (cloudData) {
-                if (Array.isArray(cloudData.folders) && cloudData.folders.length > 0) {
-                  setFolders(cloudData.folders);
-                }
-                if (Array.isArray(cloudData.bookmarks) && cloudData.bookmarks.length > 0) {
-                  setBookmarks(cloudData.bookmarks);
-                }
-                if (cloudData.settings && Object.keys(cloudData.settings).length > 0) {
-                  setSettings((prev) => ({ ...prev, ...cloudData.settings }));
-                }
-                if (cloudData.version) {
-                  localVersionRef.current = cloudData.version;
-                }
-                setSyncStatus("synced");
-                setLastSyncedAt(cloudData.updated_at || Date.now());
-              } else {
-                setSyncStatus("synced");
-              }
-            })
-            .catch(() => setSyncStatus("offline"));
-        } else {
-          setSyncStatus("unauthenticated");
-        }
-      })
-      .catch(() => setSyncStatus("unauthenticated"));
+    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
+    const channel = new BroadcastChannel("vxnav_cross_tab_sync");
+    broadcastChannelRef.current = channel;
+
+    channel.onmessage = (event) => {
+      const msg = event.data;
+      if (!msg || msg.type !== "SYNC_STATE_BROADCAST") return;
+
+      const { folders: newFolders, bookmarks: newBookmarks, settings: newSettings, version, updatedAt } =
+        msg.payload || {};
+      if (typeof version === "number" && version >= localVersionRef.current) {
+        localVersionRef.current = version;
+        isPullingRef.current = true;
+        if (Array.isArray(newFolders)) setFolders(newFolders);
+        if (Array.isArray(newBookmarks)) setBookmarks(newBookmarks);
+        if (newSettings) setSettings(newSettings);
+        setLastSyncedAt(updatedAt || Date.now());
+        setSyncStatus("synced");
+
+        try {
+          if (Array.isArray(newFolders)) localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(newFolders));
+          if (Array.isArray(newBookmarks)) localStorage.setItem(STORAGE_KEY_BOOKMARKS, JSON.stringify(newBookmarks));
+          if (newSettings) localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(newSettings));
+        } catch {}
+
+        setTimeout(() => {
+          isPullingRef.current = false;
+        }, 150);
+      }
+    };
+
+    return () => {
+      channel.close();
+      broadcastChannelRef.current = null;
+    };
   }, []);
 
-  // 2. Push changes to cloud (debounced 800ms)
-  const pushToCloud = useCallback(
-    async (currentFolders: Folder[], currentBookmarks: Bookmark[], currentSettings: Settings) => {
-      if (!user || isPullingRef.current) return;
+  // 1. Core push function
+  const executePush = useCallback(
+    async (pushData: { folders: Folder[]; bookmarks: Bookmark[]; settings: Settings }) => {
+      if (!user) return;
+      isPushingRef.current = true;
       setSyncStatus("syncing");
       try {
         const res = await fetch("/api/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            folders: currentFolders,
-            bookmarks: currentBookmarks,
-            settings: currentSettings,
+            folders: pushData.folders,
+            bookmarks: pushData.bookmarks,
+            settings: pushData.settings,
             clientVersion: localVersionRef.current,
           }),
         });
+
         if (res.ok) {
           const data = await res.json();
           localVersionRef.current = data.version;
           setSyncStatus("synced");
           setLastSyncedAt(data.updated_at);
+
+          // Broadcast to other tabs on the same machine
+          broadcastChannelRef.current?.postMessage({
+            type: "SYNC_STATE_BROADCAST",
+            payload: {
+              folders: pushData.folders,
+              bookmarks: pushData.bookmarks,
+              settings: pushData.settings,
+              version: data.version,
+              updatedAt: data.updated_at,
+            },
+          });
         } else {
           setSyncStatus("offline");
         }
       } catch {
         setSyncStatus("offline");
+      } finally {
+        isPushingRef.current = false;
       }
     },
     [user]
   );
 
-  // Trigger pushToCloud when data changes and user is logged in
-  useEffect(() => {
-    if (!isLoaded || !user || isPullingRef.current) return;
-    if (syncDebounceTimer.current) {
-      clearTimeout(syncDebounceTimer.current);
-    }
-    syncDebounceTimer.current = setTimeout(() => {
-      pushToCloud(folders, bookmarks, settings);
-    }, 800);
-
-    return () => {
-      if (syncDebounceTimer.current) {
-        clearTimeout(syncDebounceTimer.current);
-      }
-    };
-  }, [folders, bookmarks, settings, isLoaded, user, pushToCloud]);
-
-  // 3. Pull latest cloud data
+  // 2. Full Pull latest cloud data
   const pullFromCloud = useCallback(async () => {
-    if (!user || isPullingRef.current) return;
+    if (!user || isPullingRef.current || isPushingRef.current) return;
     try {
       const res = await fetch("/api/sync");
       if (res.ok) {
         const cloudData = await res.json();
-        if (cloudData.version && cloudData.version > localVersionRef.current) {
+        if (typeof cloudData.version === "number" && cloudData.version > localVersionRef.current) {
           isPullingRef.current = true;
           setSyncStatus("syncing");
+
           if (Array.isArray(cloudData.folders)) {
             setFolders(cloudData.folders);
+            try {
+              localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(cloudData.folders));
+            } catch {}
           }
+
           if (Array.isArray(cloudData.bookmarks)) {
             setBookmarks(cloudData.bookmarks);
+            try {
+              localStorage.setItem(STORAGE_KEY_BOOKMARKS, JSON.stringify(cloudData.bookmarks));
+            } catch {}
           }
+
           if (cloudData.settings && Object.keys(cloudData.settings).length > 0) {
-            setSettings((prev) => ({ ...prev, ...cloudData.settings }));
+            setSettings((prev) => {
+              const merged = { ...prev, ...cloudData.settings };
+              try {
+                localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
           }
+
           localVersionRef.current = cloudData.version;
           setLastSyncedAt(cloudData.updated_at);
           setSyncStatus("synced");
+
           setTimeout(() => {
             isPullingRef.current = false;
-          }, 300);
+          }, 200);
         }
       }
     } catch {
@@ -277,67 +305,287 @@ export function useBookmarkStore() {
     }
   }, [user]);
 
-  // Pull on focus, visibility change, and periodic heartbeat
+  // 3. Lightweight heartbeat version check
+  const checkCloudVersionAndSync = useCallback(async () => {
+    if (!user || !isInitialSyncDoneRef.current || isPullingRef.current || isPushingRef.current) return;
+    try {
+      const res = await fetch("/api/sync?version_only=1");
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.version === "number" && data.version > localVersionRef.current) {
+          await pullFromCloud();
+        }
+      }
+    } catch {
+      // Ignore background heartbeat error
+    }
+  }, [user, pullFromCloud]);
+
+  // 4. Initial check login status and cloud sync
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initAuthAndSync() {
+      try {
+        const meRes = await fetch("/api/auth/me");
+        if (!meRes.ok) {
+          if (!cancelled) {
+            setUser(null);
+            setSyncStatus("unauthenticated");
+            isInitialSyncDoneRef.current = true;
+          }
+          return;
+        }
+
+        const meData = await meRes.json();
+        if (cancelled) return;
+
+        if (meData.user) {
+          setUser(meData.user);
+          setSyncStatus("syncing");
+
+          // Pull cloud data
+          const syncRes = await fetch("/api/sync");
+          if (cancelled) return;
+
+          if (syncRes.ok) {
+            const cloudData = await syncRes.json();
+            if (cloudData && typeof cloudData.version === "number" && cloudData.version > 0) {
+              isPullingRef.current = true;
+              if (Array.isArray(cloudData.folders)) {
+                setFolders(cloudData.folders);
+                try {
+                  localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(cloudData.folders));
+                } catch {}
+              }
+              if (Array.isArray(cloudData.bookmarks)) {
+                setBookmarks(cloudData.bookmarks);
+                try {
+                  localStorage.setItem(STORAGE_KEY_BOOKMARKS, JSON.stringify(cloudData.bookmarks));
+                } catch {}
+              }
+              if (cloudData.settings && Object.keys(cloudData.settings).length > 0) {
+                setSettings((prev) => {
+                  const merged = { ...prev, ...cloudData.settings };
+                  try {
+                    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+                  } catch {}
+                  return merged;
+                });
+              }
+              localVersionRef.current = cloudData.version;
+              setLastSyncedAt(cloudData.updated_at || Date.now());
+              setSyncStatus("synced");
+              setTimeout(() => {
+                isPullingRef.current = false;
+              }, 200);
+            } else {
+              // Brand new user: push existing local cache to initialize cloud database
+              setSyncStatus("synced");
+              let localF = folders;
+              let localB = bookmarks;
+              let localS = settings;
+              try {
+                const sf = localStorage.getItem(STORAGE_KEY_FOLDERS);
+                if (sf) localF = JSON.parse(sf);
+                const sb = localStorage.getItem(STORAGE_KEY_BOOKMARKS);
+                if (sb) localB = JSON.parse(sb);
+                const ss = localStorage.getItem(STORAGE_KEY_SETTINGS);
+                if (ss) localS = JSON.parse(ss);
+              } catch {}
+              executePush({ folders: localF, bookmarks: localB, settings: localS });
+            }
+          } else {
+            setSyncStatus("offline");
+          }
+          isInitialSyncDoneRef.current = true;
+        } else {
+          setUser(null);
+          setSyncStatus("unauthenticated");
+          isInitialSyncDoneRef.current = true;
+        }
+      } catch {
+        if (!cancelled) {
+          setSyncStatus("unauthenticated");
+          isInitialSyncDoneRef.current = true;
+        }
+      }
+    }
+
+    initAuthAndSync();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 5. Auto-sync on local user changes (250ms debounced)
+  useEffect(() => {
+    if (!isLoaded || !user || !isInitialSyncDoneRef.current || isPullingRef.current) return;
+
+    pendingPushDataRef.current = { folders, bookmarks, settings };
+
+    if (syncDebounceTimer.current) {
+      clearTimeout(syncDebounceTimer.current);
+    }
+
+    syncDebounceTimer.current = setTimeout(() => {
+      if (pendingPushDataRef.current) {
+        const dataToPush = pendingPushDataRef.current;
+        pendingPushDataRef.current = null;
+        executePush(dataToPush);
+      }
+    }, 250);
+
+    return () => {
+      if (syncDebounceTimer.current) {
+        clearTimeout(syncDebounceTimer.current);
+      }
+    };
+  }, [folders, bookmarks, settings, isLoaded, user, executePush]);
+
+  // 6. Guarantee uncommitted changes are pushed before page closes or tab is hidden
+  useEffect(() => {
+    const flushPendingSync = () => {
+      if (pendingPushDataRef.current && user && isInitialSyncDoneRef.current) {
+        const dataToPush = pendingPushDataRef.current;
+        pendingPushDataRef.current = null;
+        try {
+          fetch("/api/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              folders: dataToPush.folders,
+              bookmarks: dataToPush.bookmarks,
+              settings: dataToPush.settings,
+              clientVersion: localVersionRef.current,
+            }),
+            keepalive: true,
+          });
+        } catch {}
+      }
+    };
+
+    window.addEventListener("beforeunload", flushPendingSync);
+    window.addEventListener("pagehide", flushPendingSync);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushPendingSync();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", flushPendingSync);
+      window.removeEventListener("pagehide", flushPendingSync);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user]);
+
+  // 7. Background heartbeat & active window detection for multi-device sync
   useEffect(() => {
     if (!user) return;
-    const handleActive = () => pullFromCloud();
+
+    const handleActive = () => {
+      if (document.visibilityState === "visible") {
+        checkCloudVersionAndSync();
+      }
+    };
+
     window.addEventListener("focus", handleActive);
     document.addEventListener("visibilitychange", handleActive);
-    const timer = setInterval(pullFromCloud, 25000);
+
+    // 4s lightweight heartbeat
+    const interval = setInterval(checkCloudVersionAndSync, 4000);
 
     return () => {
       window.removeEventListener("focus", handleActive);
       document.removeEventListener("visibilitychange", handleActive);
-      clearInterval(timer);
+      clearInterval(interval);
     };
-  }, [user, pullFromCloud]);
+  }, [user, checkCloudVersionAndSync]);
 
-  // 4. Manual sync
+  // 8. Manual sync handler
   const syncNow = useCallback(async () => {
     if (!user) {
       setAuthModalOpen(true);
       return;
     }
     setSyncStatus("syncing");
-    await pushToCloud(folders, bookmarks, settings);
+    if (pendingPushDataRef.current) {
+      const dataToPush = pendingPushDataRef.current;
+      pendingPushDataRef.current = null;
+      await executePush(dataToPush);
+    } else {
+      await executePush({ folders, bookmarks, settings });
+    }
     await pullFromCloud();
-  }, [user, folders, bookmarks, settings, pushToCloud, pullFromCloud]);
+  }, [user, folders, bookmarks, settings, executePush, pullFromCloud]);
 
-  // 5. Auth handlers
-  const handleLoginSuccess = useCallback((loggedInUser: AuthUser) => {
-    setUser(loggedInUser);
-    setSyncStatus("syncing");
-    fetch("/api/sync")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((cloudData) => {
-        if (cloudData) {
-          if (Array.isArray(cloudData.folders) && cloudData.folders.length > 0) {
-            setFolders(cloudData.folders);
-          }
-          if (Array.isArray(cloudData.bookmarks) && cloudData.bookmarks.length > 0) {
-            setBookmarks(cloudData.bookmarks);
-          }
-          if (cloudData.settings && Object.keys(cloudData.settings).length > 0) {
-            setSettings((prev) => ({ ...prev, ...cloudData.settings }));
-          }
-          if (cloudData.version) {
+  // 9. Auth handlers
+  const handleLoginSuccess = useCallback(
+    async (loggedInUser: AuthUser) => {
+      setUser(loggedInUser);
+      setSyncStatus("syncing");
+      isInitialSyncDoneRef.current = false;
+      isPullingRef.current = true;
+
+      try {
+        const res = await fetch("/api/sync");
+        if (res.ok) {
+          const cloudData = await res.json();
+          if (cloudData && typeof cloudData.version === "number" && cloudData.version > 0) {
+            if (Array.isArray(cloudData.folders)) {
+              setFolders(cloudData.folders);
+              try {
+                localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(cloudData.folders));
+              } catch {}
+            }
+            if (Array.isArray(cloudData.bookmarks)) {
+              setBookmarks(cloudData.bookmarks);
+              try {
+                localStorage.setItem(STORAGE_KEY_BOOKMARKS, JSON.stringify(cloudData.bookmarks));
+              } catch {}
+            }
+            if (cloudData.settings && Object.keys(cloudData.settings).length > 0) {
+              setSettings((prev) => {
+                const merged = { ...prev, ...cloudData.settings };
+                try {
+                  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+                } catch {}
+                return merged;
+              });
+            }
             localVersionRef.current = cloudData.version;
+            setLastSyncedAt(cloudData.updated_at || Date.now());
+            setSyncStatus("synced");
+          } else {
+            // Brand new account on cloud: initialize with local data
+            setSyncStatus("synced");
+            executePush({ folders, bookmarks, settings });
           }
         }
-        setSyncStatus("synced");
-        setLastSyncedAt(cloudData?.updated_at || Date.now());
-      })
-      .catch(() => setSyncStatus("synced"));
-  }, []);
+      } catch {
+        setSyncStatus("offline");
+      } finally {
+        isInitialSyncDoneRef.current = true;
+        setTimeout(() => {
+          isPullingRef.current = false;
+        }, 200);
+      }
+    },
+    [folders, bookmarks, settings, executePush]
+  );
 
   const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // Ignore
-    }
+    } catch {}
     setUser(null);
     setSyncStatus("unauthenticated");
+    localVersionRef.current = 0;
+    isInitialSyncDoneRef.current = false;
   }, []);
 
   // Bookmark actions
@@ -516,7 +764,7 @@ export function useBookmarkStore() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `waypoint-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `vxnav-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [folders, bookmarks, settings]);

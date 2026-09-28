@@ -25,6 +25,7 @@ import {
   Trash2,
   Plus,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 
 interface BackgroundModalProps {
@@ -32,6 +33,7 @@ interface BackgroundModalProps {
   onOpenChange: (open: boolean) => void;
   settings: Settings;
   onUpdateSettings: (settings: Partial<Settings>) => void;
+  onOpenTransparencyPanel?: () => void;
 }
 
 // Client-side image compression to prevent exceeding localStorage quota
@@ -87,6 +89,7 @@ export function BackgroundModal({
   onOpenChange,
   settings,
   onUpdateSettings,
+  onOpenTransparencyPanel,
 }: BackgroundModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -350,7 +353,7 @@ export function BackgroundModal({
           </div>
 
           {/* Section: Background Effect Sliders */}
-          <div className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-900/50 p-4">
+          <div className="space-y-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] p-4">
             <h4 className="flex items-center gap-1.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
               <Sliders className="h-3.5 w-3.5 text-violet-500" />
               <span>背景效果</span>
@@ -390,11 +393,24 @@ export function BackgroundModal({
           </div>
 
           {/* Section: UI Elements Transparency Sliders */}
-          <div className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-900/50 p-4">
-            <h4 className="flex items-center gap-1.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-              <LayoutTemplate className="h-3.5 w-3.5 text-indigo-500" />
-              <span>组件透明度</span>
-            </h4>
+          <div className="space-y-4 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] p-4">
+            <div className="flex items-center justify-between">
+              <h4 className="flex items-center gap-1.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                <LayoutTemplate className="h-3.5 w-3.5 text-indigo-500" />
+                <span>组件透明度</span>
+              </h4>
+              {onOpenTransparencyPanel && (
+                <button
+                  type="button"
+                  onClick={onOpenTransparencyPanel}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                  title="关闭当前遮罩弹窗，在屏幕右侧悬浮实时无遮挡预览调节"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  <span>移到外部实时预览</span>
+                </button>
+              )}
+            </div>
 
             {/* 1. Navigation Bar Transparency */}
             <div className="space-y-1.5">

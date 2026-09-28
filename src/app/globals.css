@@ -35,13 +35,13 @@
     --text-contrast-shadow: 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 4px rgba(255, 255, 255, 0.8);
 
     /* Glass tokens */
-    --glass-bg: rgba(255, 255, 255, var(--nav-opacity));
-    --glass-nav-bg: rgba(255, 255, 255, var(--nav-opacity));
+    --glass-bg: rgb(255 255 255 / var(--nav-opacity));
+    --glass-nav-bg: rgb(255 255 255 / var(--nav-opacity));
     --glass-border: rgba(255, 255, 255, 0.6);
-    --glass-card-bg: rgba(255, 255, 255, var(--card-opacity));
-    --glass-card-bg-end: rgba(245, 245, 247, var(--card-opacity));
+    --glass-card-bg: rgb(255 255 255 / var(--card-opacity));
+    --glass-card-bg-end: rgb(245 245 247 / var(--card-opacity));
     --glass-card-border: rgba(255, 255, 255, 0.5);
-    --glass-modal-bg: rgba(255, 255, 255, var(--modal-opacity));
+    --glass-modal-bg: rgb(255 255 255 / var(--modal-opacity));
     --glass-card-shadow: rgba(0, 0, 0, 0.08);
     --glass-card-hover-border: rgba(124, 58, 237, 0.4);
     --glass-card-hover-shadow: rgba(124, 58, 237, 0.12);
@@ -78,13 +78,13 @@
     --text-contrast-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
 
     /* Glass tokens */
-    --glass-bg: rgba(18, 18, 24, var(--nav-opacity));
-    --glass-nav-bg: rgba(18, 18, 24, var(--nav-opacity));
+    --glass-bg: rgb(18 18 24 / var(--nav-opacity));
+    --glass-nav-bg: rgb(24 24 27 / var(--nav-opacity));
     --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-card-bg: rgba(28, 28, 36, var(--card-opacity));
-    --glass-card-bg-end: rgba(18, 18, 24, var(--card-opacity));
+    --glass-card-bg: rgb(24 24 27 / var(--card-opacity));
+    --glass-card-bg-end: rgb(18 18 24 / var(--card-opacity));
     --glass-card-border: rgba(255, 255, 255, 0.07);
-    --glass-modal-bg: rgba(18, 18, 24, var(--modal-opacity));
+    --glass-modal-bg: rgb(20 20 24 / var(--modal-opacity));
     --glass-card-shadow: rgba(0, 0, 0, 0.5);
     --glass-card-hover-border: rgba(168, 85, 247, 0.4);
     --glass-card-hover-shadow: rgba(168, 85, 247, 0.15);

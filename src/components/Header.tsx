@@ -18,10 +18,10 @@ import {
   Settings as SettingsIcon,
   Globe,
   Cloud,
-  RefreshCw,
   LogOut,
   FileCode,
   ChevronDown,
+  Sliders,
 } from "lucide-react";
 import { AuthUser, SyncStatus } from "@/hooks/useBookmarkStore";
 import {
@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import DashboardWidget from "@/components/DashboardWidget";
 
 interface HeaderProps {
   searchQuery: string;
@@ -39,6 +40,7 @@ interface HeaderProps {
   onUpdateSettings: (settings: Partial<Settings>) => void;
   onOpenAddModal?: () => void;
   onOpenBackgroundModal: () => void;
+  onOpenTransparencyPanel?: () => void;
   onOpenBookmarkletModal: () => void;
   onExportData: () => void;
   onExportHtml?: () => void;
@@ -133,6 +135,7 @@ export function Header({
   onUpdateSettings,
   onOpenAddModal,
   onOpenBackgroundModal,
+  onOpenTransparencyPanel,
   onOpenBookmarkletModal,
   onExportData,
   onExportHtml,
@@ -219,13 +222,13 @@ export function Header({
         {/* Brand Logo */}
         <div className="flex items-center gap-3.5">
           <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.4)] border border-white/20 dark:border-white/15">
-            <img src="/icon.svg" alt="WayPoint" className="h-full w-full object-cover transition-transform hover:scale-105" />
+            <img src="/icon.svg" alt="vxNav" className="h-full w-full object-cover transition-transform hover:scale-105" />
             <div className="absolute inset-0 rounded-2xl bg-violet-400/20 blur-md -z-10" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)] text-shadow-contrast">
-                Way<span className="text-violet-500 dark:text-violet-400">Point</span>
+                vx<span className="text-violet-500 dark:text-violet-400">Nav</span>
               </span>
             </div>
             <p className="hidden text-xs text-zinc-600 dark:text-zinc-300 font-medium sm:block text-shadow-contrast">
@@ -234,59 +237,67 @@ export function Header({
           </div>
         </div>
 
-        {/* Global Search Bar - Refined Pill matching reference screenshot */}
-        <div className="flex-1 max-w-xl">
-          <div className="relative flex items-center rounded-full border border-white/70 dark:border-white/15 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all focus-within:border-violet-500/60 focus-within:shadow-[0_4px_24px_rgba(139,92,246,0.15)] h-11">
-            {/* Search Engine Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+        {/* Center Search & Weather Group */}
+        <div className="flex-1 flex items-center justify-center gap-3 sm:gap-3.5 min-w-0">
+          {/* Global Search Bar - Refined Pill matching reference screenshot */}
+          <div className="w-full max-w-xl min-w-0">
+            <div className="relative flex items-center rounded-full border border-white/70 dark:border-white/15 bg-[var(--glass-nav-bg)] backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all focus-within:border-violet-500/60 focus-within:shadow-[0_4px_24px_rgba(139,92,246,0.15)] h-11">
+              {/* Search Engine Switcher */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer select-none text-zinc-800 dark:text-zinc-100"
+                    title="切换搜索引擎"
+                  >
+                    {currentEngine.icon}
+                    <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                      {currentEngine.name}
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-36">
+                  {SEARCH_ENGINES.map((engine) => (
+                    <DropdownMenuItem
+                      key={engine.id}
+                      onClick={() => onUpdateSettings({ searchEngine: engine.id })}
+                      className="flex items-center gap-2.5 text-xs text-zinc-700 dark:text-zinc-100 font-semibold cursor-pointer"
+                    >
+                      {engine.icon}
+                      <span>{engine.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Search Input */}
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="搜索你感兴趣的内容或网站..."
+                className="flex-1 bg-transparent py-2 px-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-400 outline-none font-medium text-shadow-contrast min-w-0"
+              />
+
+              {/* Magnifier Search Button */}
+              <div className="pr-1.5 flex items-center shrink-0">
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer select-none text-zinc-800 dark:text-zinc-100"
-                  title="切换搜索引擎"
+                  onClick={handleExecuteSearch}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100/90 hover:bg-violet-600 dark:bg-white/10 dark:hover:bg-violet-600 text-zinc-500 hover:text-white dark:text-zinc-400 dark:hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                  title="搜索"
                 >
-                  {currentEngine.icon}
-                  <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
-                    {currentEngine.name}
-                  </span>
+                  <Search className="h-4 w-4" />
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-36">
-                {SEARCH_ENGINES.map((engine) => (
-                  <DropdownMenuItem
-                    key={engine.id}
-                    onClick={() => onUpdateSettings({ searchEngine: engine.id })}
-                    className="flex items-center gap-2.5 text-xs text-zinc-700 dark:text-zinc-100 font-semibold cursor-pointer"
-                  >
-                    {engine.icon}
-                    <span>{engine.name}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Search Input */}
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="搜索你感兴趣的内容或网站..."
-              className="flex-1 bg-transparent py-2 px-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-400 outline-none font-medium text-shadow-contrast min-w-0"
-            />
-
-            {/* Magnifier Search Button */}
-            <div className="pr-1.5 flex items-center shrink-0">
-              <button
-                type="button"
-                onClick={handleExecuteSearch}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100/90 hover:bg-violet-600 dark:bg-white/10 dark:hover:bg-violet-600 text-zinc-500 hover:text-white dark:text-zinc-400 dark:hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
-                title="搜索"
-              >
-                <Search className="h-4 w-4" />
-              </button>
+              </div>
             </div>
+          </div>
+
+          {/* Date & Weather Widget - In header right next to search bar */}
+          <div className="hidden lg:flex shrink-0">
+            <DashboardWidget />
           </div>
         </div>
 
@@ -296,7 +307,7 @@ export function Header({
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-white/75 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
             title={theme === "dark" ? "切换浅色模式" : "切换深色模式"}
           >
             {theme === "dark" ? (
@@ -311,13 +322,20 @@ export function Header({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-white/75 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
                 title="设置与数据"
               >
                 <SettingsIcon className="h-4.5 w-4.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
+              {onOpenTransparencyPanel && (
+                <DropdownMenuItem onClick={onOpenTransparencyPanel}>
+                  <Sliders className="mr-2 h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+                  <span className="text-zinc-800 dark:text-zinc-100 font-medium">调整组件透明度</span>
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuItem onClick={onOpenBackgroundModal}>
                 <Palette className="mr-2 h-4 w-4 text-violet-600 dark:text-violet-400" />
                 <span className="text-zinc-800 dark:text-zinc-100 font-medium">外观与背景</span>
@@ -376,8 +394,8 @@ export function Header({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-full border border-white/50 dark:border-white/10 bg-white/75 dark:bg-zinc-800/80 pl-1.5 pr-2.5 py-1 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-white hover:text-black dark:hover:text-zinc-200 hover:border-violet-500/40 transition-all shadow-sm cursor-pointer"
-                  title="云端同步正常"
+                  className="flex items-center gap-1.5 rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] pl-1.5 pr-2.5 py-1 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-white hover:text-black dark:hover:text-zinc-200 hover:border-violet-500/40 transition-all shadow-sm cursor-pointer"
+                  title={`已登录: ${user.username}`}
                 >
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-500 text-white font-bold text-xs uppercase shadow-sm">
                     {user.username.slice(0, 1)}
@@ -388,28 +406,17 @@ export function Header({
                   <ChevronDown className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-400 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-52">
                 <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
                   <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                    已登录: {user.username}
+                    {user.username}
                   </p>
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {syncStatus === "syncing"
-                      ? "正在同步..."
-                      : lastSyncedAt
+                    {lastSyncedAt
                       ? `已同步 (${new Date(lastSyncedAt).toLocaleTimeString()})`
-                      : "实时同步已开启"}
+                      : "多端自动同步已开启"}
                   </p>
                 </div>
-
-                {onSyncNow && (
-                  <DropdownMenuItem onClick={onSyncNow} className="text-xs font-medium cursor-pointer">
-                    <RefreshCw className={`mr-2 h-3.5 w-3.5 ${syncStatus === "syncing" ? "animate-spin text-violet-500" : "text-emerald-500"}`} />
-                    <span>立即同步</span>
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuSeparator />
 
                 {onLogout && (
                   <DropdownMenuItem

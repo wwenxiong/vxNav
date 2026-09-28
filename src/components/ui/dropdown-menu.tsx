@@ -45,7 +45,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 p-1.5 text-zinc-700 dark:text-zinc-200 shadow-xl backdrop-blur-md animate-in fade-in-80",
+      "z-50 min-w-[8rem] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-[var(--glass-modal-bg)] p-1.5 text-zinc-700 dark:text-zinc-200 shadow-xl backdrop-blur-md animate-in fade-in-80",
       className
     )}
     {...props}
@@ -62,7 +62,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[9rem] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-white/95 dark:bg-zinc-950/95 p-1.5 text-zinc-700 dark:text-zinc-200 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-in fade-in-80 zoom-in-95",
+        "z-50 min-w-[9rem] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-[var(--glass-modal-bg)] p-1.5 text-zinc-700 dark:text-zinc-200 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-in fade-in-80 zoom-in-95",
         className
       )}
       {...props}

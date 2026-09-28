@@ -7,10 +7,10 @@ import { Bookmark, Folder, SortOption } from "@/types";
 import Header from "@/components/Header";
 import FolderNav from "@/components/FolderNav";
 import BookmarkCard from "@/components/BookmarkCard";
-import DashboardWidget from "@/components/DashboardWidget";
 import AddBookmarkModal from "@/components/AddBookmarkModal";
 import FolderModal from "@/components/FolderModal";
 import BackgroundModal from "@/components/BackgroundModal";
+import TransparencyPanel from "@/components/TransparencyPanel";
 import BookmarkletModal from "@/components/BookmarkletModal";
 import AuthModal from "@/components/AuthModal";
 import BatchActionBar from "@/components/BatchActionBar";
@@ -68,6 +68,7 @@ function NavigationContent() {
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
 
   const [backgroundModalOpen, setBackgroundModalOpen] = useState(false);
+  const [transparencyPanelOpen, setTransparencyPanelOpen] = useState(false);
   const [bookmarkletModalOpen, setBookmarkletModalOpen] = useState(false);
 
   // Drag and Drop state
@@ -206,7 +207,9 @@ function NavigationContent() {
     root.style.setProperty("--nav-opacity", String(settings.navOpacity ?? 0.6));
     root.style.setProperty("--card-opacity", String(settings.cardOpacity ?? 0.45));
     root.style.setProperty("--modal-opacity", String(settings.modalOpacity ?? 0.85));
-  }, [settings.navOpacity, settings.cardOpacity, settings.modalOpacity]);
+    root.style.setProperty("--bg-opacity", String(settings.bgOpacity ?? 0));
+    root.style.setProperty("--bg-blur", `${settings.bgBlur ?? 10}px`);
+  }, [settings.navOpacity, settings.cardOpacity, settings.modalOpacity, settings.bgOpacity, settings.bgBlur]);
 
   // Sorting preference state
   const [sortBy, setSortBy] = useState<SortOption>("default");
@@ -317,10 +320,10 @@ function NavigationContent() {
       {/* Dynamic Background Layer */}
       {settings.backgroundImage ? (
         <div
-          className="fixed inset-0 -z-30 bg-cover bg-center transition-[filter,opacity] duration-700"
+          className="fixed inset-0 -z-30 bg-cover bg-center transition-opacity duration-500"
           style={{
             backgroundImage: `url(${settings.backgroundImage})`,
-            filter: `blur(${settings.bgBlur}px)`,
+            filter: `blur(var(--bg-blur, ${settings.bgBlur}px))`,
             transform: "scale(1.08)",
           }}
         />
@@ -330,9 +333,9 @@ function NavigationContent() {
 
       {/* Overlay Mask — uses overlay-color CSS variable */}
       <div
-        className="fixed inset-0 -z-20 transition-opacity duration-300"
+        className="fixed inset-0 -z-20 pointer-events-none"
         style={{
-          backgroundColor: `rgba(var(--overlay-color), ${settings.bgOpacity})`,
+          backgroundColor: `rgba(var(--overlay-color), var(--bg-opacity, ${settings.bgOpacity}))`,
         }}
       />
 
@@ -350,6 +353,7 @@ function NavigationContent() {
         onUpdateSettings={updateSettings}
         onOpenAddModal={handleCreateBookmark}
         onOpenBackgroundModal={() => setBackgroundModalOpen(true)}
+        onOpenTransparencyPanel={() => setTransparencyPanelOpen(true)}
         onOpenBookmarkletModal={() => setBookmarkletModalOpen(true)}
         onExportData={exportData}
         onExportHtml={exportHtml}
@@ -366,6 +370,7 @@ function NavigationContent() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full px-4 py-4 sm:px-8 max-w-[1920px] mx-auto">
+
         {/* Category Navigation Bar */}
         <div className="mb-5">
           <FolderNav
@@ -388,9 +393,6 @@ function NavigationContent() {
             }}
           />
         </div>
-
-        {/* Top Greeting & Weather/Clock Widget (shown when not searching) */}
-        {!searchQuery.trim() && <DashboardWidget />}
 
         {/* Content Section with AnimatePresence */}
         <AnimatePresence mode="wait">
@@ -828,6 +830,21 @@ function NavigationContent() {
         onOpenChange={setBackgroundModalOpen}
         settings={settings}
         onUpdateSettings={updateSettings}
+        onOpenTransparencyPanel={() => {
+          setBackgroundModalOpen(false);
+          setTransparencyPanelOpen(true);
+        }}
+      />
+
+      <TransparencyPanel
+        open={transparencyPanelOpen}
+        onClose={() => setTransparencyPanelOpen(false)}
+        settings={settings}
+        onUpdateSettings={updateSettings}
+        onOpenBackgroundModal={() => {
+          setTransparencyPanelOpen(false);
+          setBackgroundModalOpen(true);
+        }}
       />
 
       <BookmarkletModal

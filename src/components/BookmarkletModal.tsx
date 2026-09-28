@@ -80,7 +80,7 @@ export function BookmarkletModal({ open, onOpenChange }: BookmarkletModalProps) 
               title="按住拖拽至浏览器书签栏"
             >
               <BookmarkPlus className="h-4 w-4" />
-              <span>收藏到 WayPoint</span>
+              <span>收藏到 vxNav</span>
             </a>
 
             <div className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -102,7 +102,7 @@ export function BookmarkletModal({ open, onOpenChange }: BookmarkletModalProps) 
                 打开浏览器书签栏：Windows 快捷键 <kbd className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-200/90 dark:bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-900 dark:text-zinc-100 font-medium">Ctrl+Shift+B</kbd>，Mac 快捷键 <kbd className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-200/90 dark:bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-900 dark:text-zinc-100 font-medium">⌘+Shift+B</kbd>。
               </li>
               <li>
-                浏览网页时，点击书签栏上的 <strong className="text-zinc-900 dark:text-zinc-100">「收藏到 WayPoint」</strong>。
+                浏览网页时，点击书签栏上的 <strong className="text-zinc-900 dark:text-zinc-100">「收藏到 vxNav」</strong>。
               </li>
               <li>
                 系统将自动打开本站并获取网页标题与图标，点击确认即可完成收藏。

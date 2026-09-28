@@ -62,7 +62,7 @@ export function BatchActionBar({
       transition={{ type: "spring", stiffness: 350, damping: 28 }}
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[94vw] sm:max-w-fit"
     >
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 rounded-full border border-white/70 dark:border-white/15 bg-white/90 dark:bg-zinc-900/90 px-4 py-2 sm:px-5 sm:py-2.5 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] select-none">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 rounded-full border border-white/70 dark:border-white/15 bg-[var(--glass-nav-bg)] px-4 py-2 sm:px-5 sm:py-2.5 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] select-none">
         {/* Count Badge */}
         <div className="flex items-center gap-2 pr-1 border-r border-zinc-200 dark:border-white/10 shrink-0">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-sm">

@@ -43,7 +43,7 @@
     <!-- Right Wing of W -->
     <path d="M 400 216 L 354 376 L 304 280 L 340 280 L 368 336 L 384 216 Z" fill="#c7d2fe" opacity="0.95" />
 
-    <!-- Center Navigation Needle (WayPoint Compass Arrow) -->
+    <!-- Center Navigation Needle (vxNav Compass Arrow) -->
     <!-- Left Facet (Lighted pure white) -->
     <path d="M 256 102 L 186 352 L 256 304 Z" fill="#ffffff" />
     <!-- Right Facet (Shaded luminous lavender) -->
@@ -52,7 +52,7 @@
     <!-- Central Centerline Spine -->
     <line x1="256" y1="102" x2="256" y2="304" stroke="#ffffff" stroke-width="2.5" opacity="0.85" />
 
-    <!-- WayPoint Core Radar Beacon Dot -->
+    <!-- vxNav Core Radar Beacon Dot -->
     <circle cx="256" cy="304" r="16" fill="#ffffff" />
     <circle cx="256" cy="304" r="24" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.5" />
     <circle cx="256" cy="304" r="8" fill="#6366f1" />

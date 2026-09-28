@@ -174,7 +174,7 @@ export function BookmarkCard({
         }}
         whileHover={{ y: isDragging ? 0 : -3 }}
         onClick={handleCardClick}
-        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border transition-[border-color,background-color,box-shadow] duration-200 select-none ${
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border transition-[border-color,box-shadow] duration-200 select-none ${
           isDragging
             ? "border-dashed border-violet-500 bg-violet-500/10 cursor-grabbing"
             : isDragOver
@@ -182,8 +182,8 @@ export function BookmarkCard({
             : isSelected
             ? "border-violet-500/80 bg-violet-500/[0.08] dark:bg-violet-500/[0.15] cursor-pointer"
             : isBatchMode
-            ? "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 cursor-pointer"
-            : "border-white/60 dark:border-white/10 bg-white/85 dark:bg-zinc-900/85 hover:border-violet-400/50 hover:shadow-[0_12px_30px_-5px_rgba(139,92,246,0.18),0_4px_20px_rgba(0,0,0,0.06)] cursor-grab active:cursor-grabbing"
+            ? "border-white/60 dark:border-white/10 bg-[var(--glass-card-bg)] hover:border-violet-400/50 cursor-pointer"
+            : "border-white/60 dark:border-white/10 bg-[var(--glass-card-bg)] hover:border-violet-400/50 hover:shadow-[0_12px_30px_-5px_rgba(139,92,246,0.18),0_4px_20px_rgba(0,0,0,0.06)] cursor-grab active:cursor-grabbing"
         } p-4 sm:p-4.5 backdrop-blur-xl transform-gpu`}
       >
         {/* Batch Selection Checkbox Indicator */}

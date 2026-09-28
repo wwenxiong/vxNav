@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "WayPoint 一键收藏助手",
+  "name": "vxNav 一键收藏助手",
   "version": "1.0.0",
-  "description": "浏览任何网页时，一键将当前网站及图标收藏保存至 WayPoint 导航站",
+  "description": "浏览任何网页时，一键将当前网站及图标收藏保存至 vxNav 导航站",
   "permissions": ["activeTab"],
   "icons": {
     "16": "icon-32.png",
@@ -11,7 +11,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "一键收藏到 WayPoint",
+    "default_title": "一键收藏到 vxNav",
     "default_icon": "icon-32.png"
   }
 }

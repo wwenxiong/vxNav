@@ -10,6 +10,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
 
+    const versionOnly = req.nextUrl.searchParams.get("version_only") === "1";
+
+    if (versionOnly) {
+      const row = db
+        .prepare(`SELECT version, updated_at FROM user_data WHERE user_id = ?`)
+        .get(user.id) as { version: number; updated_at: number } | undefined;
+
+      return NextResponse.json({
+        version: row?.version ?? 0,
+        updated_at: row?.updated_at ?? 0,
+      });
+    }
+
     const row = db
       .prepare(
         `SELECT folders, bookmarks, settings, version, updated_at 
@@ -31,8 +44,8 @@ export async function GET(req: NextRequest) {
         folders: [],
         bookmarks: [],
         settings: {},
-        version: 1,
-        updated_at: Date.now(),
+        version: 0,
+        updated_at: 0,
       });
     }
 

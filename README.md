@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧭 WayPoint
+# 🧭 vxNav
 
 **记录每一次启航 · 极简优雅的现代化个人网址导航与数字工作台**
 
