@@ -6,11 +6,74 @@ import { Bookmark, Folder, Settings } from "@/types";
 export async function GET(req: NextRequest) {
   try {
     const user = getSessionUser(req);
-    if (!user) {
-      return NextResponse.json({ error: "未登录" }, { status: 401 });
-    }
-
     const versionOnly = req.nextUrl.searchParams.get("version_only") === "1";
+
+    if (!user) {
+      // Unauthenticated visitor (Guest)
+      // Check if primary admin data exists
+      const adminData = db
+        .prepare(
+          `SELECT ud.folders, ud.bookmarks, ud.settings, ud.version, ud.updated_at 
+           FROM users u 
+           JOIN user_data ud ON u.id = ud.user_id 
+           ORDER BY u.created_at ASC 
+           LIMIT 1`
+        )
+        .get() as
+        | {
+            folders: string;
+            bookmarks: string;
+            settings: string;
+            version: number;
+            updated_at: number;
+          }
+        | undefined;
+
+      if (!adminData) {
+        return NextResponse.json({
+          isGuest: true,
+          isSitePrivate: false,
+          folders: [],
+          bookmarks: [],
+          settings: {},
+          version: 0,
+          updated_at: 0,
+        });
+      }
+
+      if (versionOnly) {
+        return NextResponse.json({
+          isGuest: true,
+          version: adminData.version,
+          updated_at: adminData.updated_at,
+        });
+      }
+
+      let adminSettings: Settings;
+      try {
+        adminSettings = JSON.parse(adminData.settings || "{}");
+      } catch {
+        adminSettings = {} as Settings;
+      }
+
+      let adminFolders: Folder[] = [];
+      let adminBookmarks: Bookmark[] = [];
+      try {
+        adminFolders = JSON.parse(adminData.folders || "[]");
+      } catch {}
+      try {
+        adminBookmarks = JSON.parse(adminData.bookmarks || "[]");
+      } catch {}
+
+      return NextResponse.json({
+        isGuest: true,
+        folders: adminFolders,
+        bookmarks: adminBookmarks,
+        settings: adminSettings,
+        version: adminData.version,
+        updated_at: adminData.updated_at,
+      });
+    }
 
     if (versionOnly) {
       const row = db

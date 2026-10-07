@@ -274,14 +274,14 @@ export function AddBookmarkModal({
             </div>
           </div>
 
-          {/* Pinned Checkbox */}
-          <div className="flex items-center gap-2 pt-1">
+          {/* Options: Pinned Checkbox */}
+          <div className="flex items-center gap-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
             <input
               type="checkbox"
               id="pinned-checkbox"
               checked={pinned}
               onChange={(e) => setPinned(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-violet-600 focus:ring-violet-500"
+              className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-violet-600 focus:ring-violet-500 cursor-pointer"
             />
             <label htmlFor="pinned-checkbox" className="text-xs text-zinc-800 dark:text-zinc-200 font-medium cursor-pointer select-none">
               置顶显示

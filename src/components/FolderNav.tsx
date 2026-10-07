@@ -21,6 +21,7 @@ interface FolderNavProps {
   folderCounts: Record<string, number>;
   totalCount: number;
   pinnedCount: number;
+  isGuest?: boolean;
   onOpenAddBookmark?: () => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
@@ -40,6 +41,7 @@ export function FolderNav({
   folderCounts,
   totalCount,
   pinnedCount,
+  isGuest = false,
   onOpenAddBookmark,
   sortBy,
   onSortChange,
@@ -369,6 +371,7 @@ export function FolderNav({
                     data-folder-id={folder.id}
                     onClick={() => onSelectFolder(folder.id)}
                     onDragOver={(e) => {
+                      if (isGuest) return;
                       e.preventDefault();
                       e.dataTransfer.dropEffect = "move";
                       if (dragOverFolderId !== folder.id) {
@@ -381,6 +384,7 @@ export function FolderNav({
                       }
                     }}
                     onDrop={(e) => {
+                      if (isGuest) return;
                       e.preventDefault();
                       setDragOverFolderId(null);
                       onDropBookmarkToFolder?.(folder.id);
@@ -402,17 +406,19 @@ export function FolderNav({
                   </button>
 
                   {/* Edit Folder button on hover */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenEditFolder(folder);
-                    }}
-                    className="opacity-0 group-hover/folder:opacity-100 transition-opacity ml-[-24px] mr-2 z-20 rounded-full p-1 bg-zinc-200/90 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-white"
-                    title={`编辑分类: ${folder.name}`}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
+                  {!isGuest && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenEditFolder(folder);
+                      }}
+                      className="opacity-0 group-hover/folder:opacity-100 transition-opacity ml-[-24px] mr-2 z-20 rounded-full p-1 bg-zinc-200/90 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-white cursor-pointer"
+                      title={`编辑分类: ${folder.name}`}
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </motion.div>
               );
             })}

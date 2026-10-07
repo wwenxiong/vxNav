@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Bookmark, Folder, Settings, SearchEngine } from "@/types";
 import { DEFAULT_BOOKMARKS, DEFAULT_FOLDERS, DEFAULT_SETTINGS } from "@/lib/constants";
 import { stripEmojis } from "@/lib/utils";
@@ -332,6 +332,20 @@ export function useBookmarkStore() {
           if (!cancelled) {
             setUser(null);
             setSyncStatus("unauthenticated");
+            try {
+              const guestRes = await fetch("/api/sync");
+              if (guestRes.ok && !cancelled) {
+                const guestData = await guestRes.json();
+                if (Array.isArray(guestData.folders)) {
+                  const sf = localStorage.getItem(STORAGE_KEY_FOLDERS);
+                  if (!sf || JSON.parse(sf).length === 0) {
+                    if (guestData.folders.length > 0) setFolders(guestData.folders);
+                    if (Array.isArray(guestData.bookmarks)) setBookmarks(guestData.bookmarks);
+                    if (guestData.settings) setSettings((prev) => ({ ...prev, ...guestData.settings }));
+                  }
+                }
+              }
+            } catch {}
             isInitialSyncDoneRef.current = true;
           }
           return;
@@ -797,6 +811,73 @@ export function useBookmarkStore() {
     }
   }, []);
 
+  const enrichBookmarksMetadata = useCallback(
+    async (itemsToEnrich: Bookmark[]) => {
+      // Find items that need description or high-resolution icon
+      const queue = itemsToEnrich.filter(
+        (b) => !b.description || !b.icon || !b.icon.startsWith("data:")
+      );
+
+      if (queue.length === 0) return;
+
+      setEnrichStatus({
+        running: true,
+        current: 0,
+        total: queue.length,
+      });
+
+      let current = 0;
+      const CONCURRENCY = 4;
+      const queueCopy = [...queue];
+
+      const worker = async () => {
+        while (queueCopy.length > 0) {
+          const item = queueCopy.shift();
+          if (!item) break;
+
+          try {
+            const res = await fetch(`/api/metadata?url=${encodeURIComponent(item.url)}`);
+            if (res.ok) {
+              const data = await res.json();
+              const updates: Partial<Bookmark> = {};
+              if (
+                data.description &&
+                (!item.description || item.description === "暂无描述" || item.description === "暂无描述信息")
+              ) {
+                updates.description = stripEmojis(data.description);
+              }
+              if (data.icon && (!item.icon || !item.icon.startsWith("data:"))) {
+                updates.icon = data.icon;
+              }
+              if (data.title && item.title === item.url) {
+                updates.title = stripEmojis(data.title);
+              }
+              if (Object.keys(updates).length > 0) {
+                updateBookmark(item.id, updates);
+              }
+            }
+          } catch {} finally {
+            current++;
+            setEnrichStatus((prev) => ({
+              ...prev,
+              current,
+            }));
+          }
+        }
+      };
+
+      await Promise.all(
+        Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker())
+      );
+
+      setEnrichStatus((prev) => ({
+        ...prev,
+        running: false,
+      }));
+    },
+    [updateBookmark]
+  );
+
   const importBrowserHtml = useCallback(
     (htmlContent: string) => {
       try {
@@ -911,76 +992,7 @@ export function useBookmarkStore() {
         };
       }
     },
-    [folders, bookmarks]
-  );
-
-  const enrichBookmarksMetadata = useCallback(
-    async (itemsToEnrich: Bookmark[]) => {
-      // Find items that need description or high-resolution icon
-      const queue = itemsToEnrich.filter(
-        (b) => !b.description || !b.icon || !b.icon.startsWith("data:")
-      );
-
-      if (queue.length === 0) return;
-
-      setEnrichStatus({
-        running: true,
-        current: 0,
-        total: queue.length,
-      });
-
-      let current = 0;
-      const CONCURRENCY = 4;
-      const queueCopy = [...queue];
-
-      const worker = async () => {
-        while (queueCopy.length > 0) {
-          const item = queueCopy.shift();
-          if (!item) break;
-
-          try {
-            const res = await fetch(`/api/metadata?url=${encodeURIComponent(item.url)}`);
-            if (res.ok) {
-              const data = await res.json();
-              const updates: Partial<Bookmark> = {};
-              if (
-                data.description &&
-                (!item.description || item.description === "暂无描述" || item.description === "暂无描述信息")
-              ) {
-                updates.description = stripEmojis(data.description);
-              }
-              if (data.icon && (!item.icon || !item.icon.startsWith("data:"))) {
-                updates.icon = data.icon;
-              }
-              if (data.title && item.title === item.url) {
-                updates.title = stripEmojis(data.title);
-              }
-              if (Object.keys(updates).length > 0) {
-                updateBookmark(item.id, updates);
-              }
-            }
-          } catch (e) {
-            // Silently continue
-          } finally {
-            current++;
-            setEnrichStatus((prev) => ({
-              ...prev,
-              current,
-            }));
-          }
-        }
-      };
-
-      await Promise.all(
-        Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker())
-      );
-
-      setEnrichStatus((prev) => ({
-        ...prev,
-        running: false,
-      }));
-    },
-    [updateBookmark]
+    [folders, bookmarks, enrichBookmarksMetadata]
   );
 
   const resetToDefaults = useCallback(() => {
@@ -1022,6 +1034,7 @@ export function useBookmarkStore() {
     importBrowserHtml,
     resetToDefaults,
     user,
+    isGuest: !user,
     syncStatus,
     lastSyncedAt,
     authModalOpen,

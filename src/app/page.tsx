@@ -49,6 +49,7 @@ function NavigationContent() {
     enrichStatus,
     resetToDefaults,
     user,
+    isGuest,
     syncStatus,
     lastSyncedAt,
     authModalOpen,
@@ -256,7 +257,7 @@ function NavigationContent() {
     [sortBy]
   );
 
-  // Compute stats
+  // Compute stats based on bookmarks
   const folderCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const b of bookmarks) {
@@ -285,11 +286,11 @@ function NavigationContent() {
     }
 
     if (activeFolderId === "pinned") {
-      return sortBookmarks(list.filter((b) => b.pinned));
+      return sortBookmarks(bookmarks.filter((b) => b.pinned));
     }
 
     if (activeFolderId !== "all") {
-      return sortBookmarks(list.filter((b) => b.folderId === activeFolderId));
+      return sortBookmarks(bookmarks.filter((b) => b.folderId === activeFolderId));
     }
 
     return sortBookmarks(list);
@@ -391,6 +392,7 @@ function NavigationContent() {
               setIsBatchMode((prev) => !prev);
               setSelectedIds([]);
             }}
+            isGuest={!user}
           />
         </div>
 
@@ -473,7 +475,7 @@ function NavigationContent() {
                       <ChevronRight className="h-4 w-4 text-zinc-400 group-hover/title:translate-x-0.5 transition-transform" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                  <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 min-[2200px]:grid-cols-7 gap-3 sm:gap-4 md:gap-4.5">
                     {pinnedBookmarks.map((bm) => (
                       <BookmarkCard
                         key={bm.id}
@@ -483,6 +485,7 @@ function NavigationContent() {
                         onEdit={handleEditBookmark}
                         onDelete={deleteBookmark}
                         onTogglePin={togglePin}
+                        isGuest={!user}
                         draggable={!searchQuery.trim()}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
@@ -569,16 +572,18 @@ function NavigationContent() {
                         <ChevronRight className="h-4 w-4 text-zinc-400 group-hover/title:translate-x-0.5 transition-transform" />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleEditFolder(folder)}
-                        className="opacity-0 group-hover/header:opacity-100 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-medium transition-all text-shadow-contrast"
-                      >
-                        编辑分类
-                      </button>
+                      {user && (
+                        <button
+                          type="button"
+                          onClick={() => handleEditFolder(folder)}
+                          className="opacity-0 group-hover/header:opacity-100 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-medium transition-all text-shadow-contrast"
+                        >
+                          编辑分类
+                        </button>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                    <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 min-[2200px]:grid-cols-7 gap-3 sm:gap-4 md:gap-4.5">
                       {folderBms.map((bm) => (
                         <BookmarkCard
                           key={bm.id}
@@ -588,6 +593,7 @@ function NavigationContent() {
                           onEdit={handleEditBookmark}
                           onDelete={deleteBookmark}
                           onTogglePin={togglePin}
+                          isGuest={!user}
                           draggable={!searchQuery.trim()}
                           onDragStart={handleDragStart}
                           onDragEnd={handleDragEnd}
@@ -608,8 +614,8 @@ function NavigationContent() {
 
               {/* Uncategorized Bookmarks */}
               {(() => {
-                const knownFolderIds = new Set(folders.map((f) => f.id));
-                const orphanBms = sortBookmarks(bookmarks.filter((b) => !knownFolderIds.has(b.folderId)));
+                const knownFolderIds = new Set(folders.map((f: Folder) => f.id));
+                const orphanBms = sortBookmarks(bookmarks.filter((b: Bookmark) => !knownFolderIds.has(b.folderId)));
                 if (orphanBms.length === 0) return null;
 
                 const isUncategorizedDragOver =
@@ -660,7 +666,7 @@ function NavigationContent() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                    <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 min-[2200px]:grid-cols-7 gap-3 sm:gap-4 md:gap-4.5">
                       {orphanBms.map((bm) => (
                         <BookmarkCard
                           key={bm.id}
@@ -670,6 +676,7 @@ function NavigationContent() {
                           onEdit={handleEditBookmark}
                           onDelete={deleteBookmark}
                           onTogglePin={togglePin}
+                          isGuest={!user}
                           draggable={!searchQuery.trim()}
                           onDragStart={handleDragStart}
                           onDragEnd={handleDragEnd}
@@ -711,7 +718,7 @@ function NavigationContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 min-[2200px]:grid-cols-7 gap-3 sm:gap-4 md:gap-4.5">
                 {filteredBookmarks.map((bm) => (
                   <BookmarkCard
                     key={bm.id}
@@ -721,6 +728,7 @@ function NavigationContent() {
                     onEdit={handleEditBookmark}
                     onDelete={deleteBookmark}
                     onTogglePin={togglePin}
+                    isGuest={!user}
                     draggable={!searchQuery.trim()}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}

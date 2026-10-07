@@ -122,10 +122,21 @@ const BaiduIcon = () => (
   </svg>
 );
 
+const GithubIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 fill-current" fill="currentColor">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+    />
+  </svg>
+);
+
 const SEARCH_ENGINES: { id: SearchEngine; name: string; url: string; icon: React.ReactNode }[] = [
   { id: "bing", name: "Bing", url: "https://www.bing.com/search?q=", icon: <BingIcon /> },
   { id: "google", name: "Google", url: "https://www.google.com/search?q=", icon: <GoogleIcon /> },
   { id: "baidu", name: "百度", url: "https://www.baidu.com/s?wd=", icon: <BaiduIcon /> },
+  { id: "github", name: "GitHub", url: "https://github.com/search?q=", icon: <GithubIcon /> },
 ];
 
 export function Header({
@@ -218,16 +229,16 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full transition-all">
-      <div className="flex w-full items-center justify-between gap-6 px-6 py-4 sm:px-10">
+      <div className="flex w-full items-center justify-between gap-2.5 sm:gap-6 px-3 sm:px-6 md:px-10 py-2.5 sm:py-4">
         {/* Brand Logo */}
-        <div className="flex items-center gap-3.5">
-          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.4)] border border-white/20 dark:border-white/15">
+        <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+          <div className="relative flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.4)] border border-white/20 dark:border-white/15">
             <img src="/icon.svg" alt="vxNav" className="h-full w-full object-cover transition-transform hover:scale-105" />
             <div className="absolute inset-0 rounded-2xl bg-violet-400/20 blur-md -z-10" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)] text-shadow-contrast">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-base sm:text-xl font-bold tracking-tight text-[var(--foreground)] text-shadow-contrast">
                 vx<span className="text-violet-500 dark:text-violet-400">Nav</span>
               </span>
             </div>
@@ -238,20 +249,20 @@ export function Header({
         </div>
 
         {/* Center Search & Weather Group */}
-        <div className="flex-1 flex items-center justify-center gap-3 sm:gap-3.5 min-w-0">
+        <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3.5 min-w-0">
           {/* Global Search Bar - Refined Pill matching reference screenshot */}
           <div className="w-full max-w-xl min-w-0">
-            <div className="relative flex items-center rounded-full border border-white/70 dark:border-white/15 bg-[var(--glass-nav-bg)] backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all focus-within:border-violet-500/60 focus-within:shadow-[0_4px_24px_rgba(139,92,246,0.15)] h-11">
+            <div className="relative flex items-center rounded-full border border-white/70 dark:border-white/15 bg-[var(--glass-nav-bg)] backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all focus-within:border-violet-500/60 focus-within:shadow-[0_4px_24px_rgba(139,92,246,0.15)] h-10 sm:h-11">
               {/* Search Engine Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer select-none text-zinc-800 dark:text-zinc-100"
+                    className="flex items-center gap-1 sm:gap-1.5 pl-2.5 sm:pl-3.5 pr-1.5 sm:pr-2 py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer select-none text-zinc-800 dark:text-zinc-100"
                     title="切换搜索引擎"
                   >
                     {currentEngine.icon}
-                    <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                    <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 hidden min-[400px]:inline">
                       {currentEngine.name}
                     </span>
                   </button>
@@ -277,8 +288,8 @@ export function Header({
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="搜索你感兴趣的内容或网站..."
-                className="flex-1 bg-transparent py-2 px-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-400 outline-none font-medium text-shadow-contrast min-w-0"
+                placeholder="搜索内容或书签..."
+                className="flex-1 bg-transparent py-1.5 px-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-400 outline-none font-medium text-shadow-contrast min-w-0"
               />
 
               {/* Magnifier Search Button */}
@@ -286,10 +297,10 @@ export function Header({
                 <button
                   type="button"
                   onClick={handleExecuteSearch}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100/90 hover:bg-violet-600 dark:bg-white/10 dark:hover:bg-violet-600 text-zinc-500 hover:text-white dark:text-zinc-400 dark:hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+                  className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-zinc-100/90 hover:bg-violet-600 dark:bg-white/10 dark:hover:bg-violet-600 text-zinc-500 hover:text-white dark:text-zinc-400 dark:hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
                   title="搜索"
                 >
-                  <Search className="h-4 w-4" />
+                  <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </button>
               </div>
             </div>
@@ -302,18 +313,18 @@ export function Header({
         </div>
 
         {/* Actions Bar */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Theme Toggle Button (Circular frosted icon button) */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
             title={theme === "dark" ? "切换浅色模式" : "切换深色模式"}
           >
             {theme === "dark" ? (
-              <Sun className="h-4.5 w-4.5" />
+              <Sun className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
             ) : (
-              <Moon className="h-4.5 w-4.5" />
+              <Moon className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
             )}
           </button>
 
@@ -322,13 +333,13 @@ export function Header({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-white/50 dark:border-white/10 bg-[var(--glass-nav-bg)] text-zinc-700 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-all hover:scale-105 shadow-sm"
                 title="设置与数据"
               >
-                <SettingsIcon className="h-4.5 w-4.5" />
+                <SettingsIcon className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="w-56">
               {onOpenTransparencyPanel && (
                 <DropdownMenuItem onClick={onOpenTransparencyPanel}>
                   <Sliders className="mr-2 h-4 w-4 text-indigo-500 dark:text-indigo-400" />
